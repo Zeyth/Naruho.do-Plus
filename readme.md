@@ -1,4 +1,4 @@
-//Naruho.do Plus +
+﻿//Naruho.do Plus +
 
 <sub>Naruho.do Plus + Agrega nuevas funciones y expande las actuales, facilitando el uso de la página y mejorando la experiencia del usuario.</sub>
 
@@ -18,5 +18,6 @@
  - Límite de Ventanas // Dado que no se puede hacer nada más que usar los feeds, la carga de la página no es tanta como en Kronos, así que a romper el servidor con un millón de AJAX requests !
 ```
 <sub>De momento tengo pensado un par de scripts adicionales, pero si alguien tiene ideas para nuevos scripts, son bienvenidos a comentarlas [@Zeyth en Naruho.do] y si son posibles e interesantes, haré lo que pueda para intentar hacerlas.</sub>
------------------------------
+
+
 <sub>Esta vez el desarrollo del script se actualizará directamente en GitHUB, existiendo dos versiones en todo momento, estable y beta, la versión beta será la que se actualize más a menudo, pero como todo beta, las funciones pueden contener errores y demás inconvenientes, son libres de usarla bajo su propio riesgo.</sub>

@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name        Naruho.do Plus ++
+// @name        Naruho.do Plus +
 // @namespace   Zeyth
 // @description Agrega funciones adicionales a Naruho.do
 // @include     http://naruho.do/*
-// @version     1.0
+// @version     1.0.0
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @require		https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js
 // @require		https://greasyfork.org/scripts/5233-jquery-cookie-plugin/code/jQuery_Cookie_Plugin.js?version=18550
