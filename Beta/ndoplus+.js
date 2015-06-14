@@ -1,9 +1,9 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name        Naruho.do Plus +
 // @namespace   Zeyth
 // @description Agrega funciones adicionales a Naruho.do
 // @include     http://naruho.do/*
-// @version     1.0.0
+// @version     1.0.1
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @require		https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js
 // @require		https://greasyfork.org/scripts/5233-jquery-cookie-plugin/code/jQuery_Cookie_Plugin.js?version=18550
@@ -297,6 +297,16 @@ console.log('Naruho.do Plus + Starto Nya!');
 			display:none !important;  \
 			}  \
 			/* /Tooltip */ \
+			/* Notification */ \
+			#pnum { \
+			font-family:Arial; \
+			font-size:13px; \
+			color:#FEFEFE; \
+			font-weight:bold; \
+			position:absolute; \
+			bottom:3px; \
+			right:7px; \
+			} \
 		</style>');
 	// { /Tooltip
 
@@ -591,6 +601,85 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	// } /Expandir Links
 
+
+	//Juguemos con Cookies
+	//Uno de los problemas de Kronos Plus es que consumia demasiada memoria en el navegador después de cierto tiempo
+	//Al grado que tuve que limitar la cantidad de pestañas en las que estaba activo el script
+	//Lo que molestó a algunas personas y me hizo agregar una opción para quitar el límite...
+	//Para no repetir los errores del pasado, tenemos que ser creativos e inventar algo que:
+	//	a) Limite el consumo de recursos del script, preferentemente a sólo una pestaña
+	//	b) No moleste a los usuarios, su funcionamiento no debe "sentirse", debe ser un cambio natural.
+	//	c) No duplique alertas, nada más molesto que escuchar 4 alertas de sonido a destiempo por tener 4 pestañas abiertas
+	//Todo se resume a que no puedo dejar ejecutando infinitamente los scripts en el fondo porque
+	//Si tenemos 50 pestañas abiertas, explotará el navegador, así que este es mi primer intento en arreglar eso.
+
+	//{ Transición de pestañas
+
+		var $now = 0;
+
+		console.log('Now: ',$now);
+
+		//Creamos una cookie 
+		function cnow() {
+
+			//Removemos Cookie Vieja si existe
+			if($now > 0) {
+				$.removeCookie('ndoplus.' + $now, { path: '/' });
+				console.log('ndoplus.' + $now);
+			}
+
+			//Tomamos la hora actual
+			$now = $.now();
+
+			//Adelantamos el reloj 60 segundos
+			var date = new Date();
+			date.setTime(date.getTime() + (60 * 1000));
+
+			//Creamos una cookie
+			$.cookie('ndoplus.' + $now, 1, { path: '/', expires: date });
+
+			//Renovamos si la ventana sigue activa
+			setTimeout(cnow,59000);
+
+		}
+
+
+		// { Leer Cookies y regresar las nuestras
+
+		function getcookies(){
+			var $cookies = [];
+			$.each($.cookie(), function (name, value) {
+				if (/^ndoplus./.test(name)) {
+					$cookies.push(parseInt(name.split('.')[1]));
+				}
+			});
+			return $cookies;
+		}
+
+		// } /Leer Cookies
+
+		function active() {
+			var date = new Date();
+			date.setTime(date.getTime() + (60 * 1000));
+			$.cookie('ndoplus.active.' + $now, 1, { path: '/', expires: date });
+			setTimeout(active,59000);
+			console.log('Pestaña Activa')
+		}
+
+		function inactive() {
+			$.removeCookie('ndoplus.active.' + $now, { path: '/' });
+			console.log('Pestaña inactiva');
+		}
+
+
+		cnow();
+		active();
+		console.log('Return: ',getcookies());
+
+
+	//} /Transición
+
+
 	// { Buscar Cambios en el DOM
 
 		function stalker() {
@@ -629,39 +718,179 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	// } /Cambios DOM
 
-	// { Actualizar Notificaciones
+	// La siguiente parte es bastante interesante
+	// En total tengo que hacer 3 AJAX Calls
+	// Notificaciones, feeds y portada
+	// Lo ideal seria ejecutarlas al mismo tiempo
+	// Para evitar que primero llegue una notificación y después se actualize el feed
+	// Y esta fue la única forma que pude idear
+	// No es para nada ortodoxa, así que si alguien conoce una mejor forma para
+	// Sincronizar las Ajax Calls, soy todo oídos.
+
+	//Pasamos las 3 ajax call por medio de funciones.
+
+	// { Notificaciones
+		function notifications() {
+			if(!GM_getValue('pnot') && location.where !== 'feed') {
+				return $.ajax({
+							dataType: 'html',
+							url: '/hashtag/empty',
+							cache: false,
+							timeout: 4000,
+						});
+			}
+			else {
+				return false;
+			}
+		}
+	// { /Notificaciones
+
+	// { Feeds
+		function feeds() {
+			if(!GM_getValue('pfeed')) {
+				return $.ajax({
+							dataType: 'html',
+							url: location.url,
+							cache: false,
+							timeout: 4000,
+						});
+			}
+			else {
+				return false;
+			}
+		}
+	// { /Feeds
+
+	// { Portada
+		function front() {
+			if(!GM_getValue('pport')) {
+				return $.ajax({
+							dataType: 'json',
+							url: '/feeds/9999999999',
+							cache: false,
+							timeout: 4000,
+						});
+			}
+			else {
+				return false;
+			}
+		}
+	// } /Portada
+
+	//Creamos un contenedor para las notificaciones
+	$('#notification').append('<span id="pnum" style=""></span>');
+
+	// { Actualizar
 
 		function update() {
 
-			if(!GM_getValue('pnot')) {
-				//Dónde estamos
-				
-				console.log(location.url);
-				//Cargamos una sección ligera
+			if(!GM_getValue('pnot') || !GM_getValue('pfeed') || !GM_getValue('pport')) {
 				console.log('Notificaciones');
-				$.ajax({
-					dataType: 'html',
-					url: '/hashtag/empty',
-					cache: false,
-					timeout: 4000,
+
+				// Ejecutamos las ajax calls simultáneamente con ayuda de $.when()
+				$.when(
+					notifications(),
+					feeds(),
+					front()	// Sé que puedo ahorrarme este request para las funciones actuales del script
+							// Pero "creo" que lo requeriré para funciones futuras, y por si alguien sólo activa portada sin notificaciones o feeds.
+				)
+				.done(function(noti,feed,front) {
+					console.log('AJAX When');
+
+					var $notcont, $newnot, $oldnot, $newfeed, $oldfeed, $newfront, $oldfront;
+
+					// { Notificaciones
+
+						//Script Activo ?
+						if(!GM_getValue('pnot')) {
+
+							//Si estamos en un feed y el script de feeds está ON, usamos el mismo request de actualizar feeds
+							if (location.where === 'feed' && !GM_getValue('pfeed')) {
+								$notcont = $(feed[0]).find('#user_actions .items');
+							}
+							else {
+								$notcont = $(noti[0]).find('#user_actions .items');
+							}
+
+							//Debug
+							//$('#notification .ndo-notify')[0].title = 'Notifications 0';
+							//Tomamos las notificaciones actuales
+							$oldnot = parseInt($('#notification .ndo-notify')[0].title.split(' ')[1]);
+
+							//Un vistazo al futuro
+							$newnot =  parseInt($notcont.find('#notification .ndo-notify')[0].title.split(' ')[1]);
+
+
+							//Comparamos los valores
+							if ($oldnot !== $newnot) {	//Los valores son distintos.
+
+								//Si las notificaciones actuales son menores a las futuras || Actuales son mayor que nuevas, pero nuevas no son 0
+								if($oldnot < $newnot || $oldnot > $newnot && $newnot !== 0) {
+
+									//Cambiamos los valores
+									$('#notification .ndo-notify')[0].title = $notcont.find('#notification .ndo-notify')[0].title;
+									
+									//Volvemos colorida la notificación
+									$('#notification').addClass('new');
+
+									//Escondemos contenedor, agregamos el número
+									$('#pnum').effect('drop', {direction:'up'}, 250, function () {
+										this.innerHTML = $newnot;
+									});
+
+									//Lo mostramos con animación.
+									$('#pnum').toggle('bounce', { times: 3 }, 'slow');
+
+									//Y hacemos ruido con la alerta
+									//{Sound}
+
+								}
+								//Si las notificaciones actuales son mayores a las nuevas y estas son 0
+								else if ($oldnot > $newnot && $newnot === 0) {
+									console.log('0 Futuro');
+									//Remover clase new a #notification
+									//Colocar 0 a #pnum
+								}
+
+							}
+							else {
+								//Mismo valor, no hay necesidad de hacer nada
+								//Se puede omitir todo este ELSE, pero me gusta escribir comentarios.
+								//Lel
+							}
+
+							console.log($newnot);
+
+						}
+
+					// } /Notificaciones
+
+
+					// { Feeds
+
+						//console.log(feed[0]);
+
+					// } /Feeds
+
+
+					// { Portada
+
+						//console.log(front[0].html);
+
+					// } /Portada
+
 				})
-				.done(function(data,status) {
-					//console.log('Success');
-					//console.log(data);
-					//console.log(status);
-					console.log(this.url);
-				})
-				.error(function(data,status,error) {
-					console.log(data,status,error);
-				})
-				.always(function(data,status) {
-					//console.log('Always');
+				.then(function() {	//Success
+					setTimeout(update,zrefresh);
+				}, function() {		//Error
+					setTimeout(update,zrefresh);
 				});
 
 			}
+
 		}
 
-	// } /Notificaciones
+	// } /Actualizar
 
 	// { Actualizar Feeds
 	// } /Feeds
