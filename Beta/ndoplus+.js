@@ -1,9 +1,9 @@
 ﻿// ==UserScript==
-// @name        Naruho.do Plus +
+// @name        Naruho.do Plus ++
 // @namespace   Zeyth
 // @description Agrega funciones adicionales a Naruho.do
-// @include     http://naruho.do/*
-// @version     1.0.1
+// @include     https://naruho.do/*
+// @version     1.0.2
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @require		https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js
 // @require		https://greasyfork.org/scripts/5233-jquery-cookie-plugin/code/jQuery_Cookie_Plugin.js?version=18550
@@ -228,6 +228,9 @@ console.log('Naruho.do Plus + Starto Nya!');
 			background-position:right !important; \
 			background-repeat:no-repeat !important; \
 			} \
+			.comments a.plus { \
+			line-height:16px !important; \
+			} \
 			\
 			a.plus.zimg, a.plus.zlink { \
 			transition: all 0.2s linear; \
@@ -420,7 +423,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 				$.each($scripts, function(index,script) {
 
 					var $script = this.id;
-					var $option = $('#' + this.id + ' .toggle').data('toggles');
+					var $option = $('#' + $script + ' .toggle').data('toggles');
 
 					if(GM_getValue($script)) {
 						$option.toggle(false, false, true);	// (Estado,NoAnimar,NoEvento) Estado puede ser true, false o 'toggles'
@@ -484,45 +487,20 @@ console.log('Naruho.do Plus + Starto Nya!');
 	// { Función para revisar si el link es una imágen
 
 		function checkimage(url,callback) {
-			var img = new Image();
-			img.src = url;
-			img.onload = function () { callback('True') };
-			img.onerror = function () { callback('False') };
-			img = null;
+			if (!/user\/logout/.test(url)) {
+				var img = new Image();
+				img.src = url;
+				img.onload = function () { callback('True') };
+				img.onerror = function () { callback('False') };
+				img = null;
+			}
+			else {
+				return callback('False');
+			}
 		}
 
 	// } /Revisar Imágen
-		
-	// { Función para saber si la pestaña está activa \\ @Denys Séguret - http://stackoverflow.com/a/19519701
-		
-		var vis = (function() {
-			var stateKey, eventKey, keys = {
-				hidden: "visibilitychange",
-				webkitHidden: "webkitvisibilitychange",
-				mozHidden: "mozvisibilitychange",
-				msHidden: "msvisibilitychange"
-			};
-			for (stateKey in keys) {
-				if (stateKey in document) {
-					eventKey = keys[stateKey];
-					break;
-				}
-			}
-			return function(c) {
-				if (c) document.addEventListener(eventKey, c);
-				return !document[stateKey];
-			}
-		})();
-		
-		var nvisible = vis();	//Regresa el estado actual de la pestaña true : false
-		
-		//Ejecuta una función al pasar a segundo plano la pestaña y viceversa
-		vis(function(){
-			document.title = vis() ? '[Visible] / ' + ztitle : '[No Visible] / '  + ztitle;
-		});							//Activa 	:	No Activa
-									//Se ejecuta por primera vez al pasar a inactiva y nuevamente al pasar a activa.
-		
-	// { /Activa
+
 
 	// { Jquery Toggles v3.1.5 \\ @ https://github.com/simontabor/jquery-toggles / http://simontabor.com/labs/toggles
 
@@ -602,7 +580,8 @@ console.log('Naruho.do Plus + Starto Nya!');
 	// } /Expandir Links
 
 
-	//Juguemos con Cookies
+
+	//Reflexión #1
 	//Uno de los problemas de Kronos Plus es que consumia demasiada memoria en el navegador después de cierto tiempo
 	//Al grado que tuve que limitar la cantidad de pestañas en las que estaba activo el script
 	//Lo que molestó a algunas personas y me hizo agregar una opción para quitar el límite...
@@ -613,19 +592,20 @@ console.log('Naruho.do Plus + Starto Nya!');
 	//Todo se resume a que no puedo dejar ejecutando infinitamente los scripts en el fondo porque
 	//Si tenemos 50 pestañas abiertas, explotará el navegador, así que este es mi primer intento en arreglar eso.
 
+
 	//{ Transición de pestañas
 
-		var $now = 0;
+		var $now = 0;	//Definimos default timestamp
+		var backtabtime, cnowtime, activetime;
 
-		console.log('Now: ',$now);
+		// { Creamos una cookie con la hora actual
 
-		//Creamos una cookie 
 		function cnow() {
-
+			console.log('ndoplus.xxxx $Now Inicial: ',$now);
 			//Removemos Cookie Vieja si existe
 			if($now > 0) {
 				$.removeCookie('ndoplus.' + $now, { path: '/' });
-				console.log('ndoplus.' + $now);
+				console.log('Removido ndoplus.' + $now);
 			}
 
 			//Tomamos la hora actual
@@ -639,10 +619,17 @@ console.log('Naruho.do Plus + Starto Nya!');
 			$.cookie('ndoplus.' + $now, 1, { path: '/', expires: date });
 
 			//Renovamos si la ventana sigue activa
-			setTimeout(cnow,59000);
+			cnowtime = setTimeout(cnow,59900);
+
+			console.log('Cookie Creada ndoplus.',$now);
+			console.log('ndoplus.xxxx $Now Final: ',$now);
 
 		}
 
+		//Ejecutar
+		cnow();
+
+		// } /Cookie Hora Actual
 
 		// { Leer Cookies y regresar las nuestras
 
@@ -653,31 +640,220 @@ console.log('Naruho.do Plus + Starto Nya!');
 					$cookies.push(parseInt(name.split('.')[1]));
 				}
 			});
+			$cookies.sort(function(a, b){return b-a});	//Acomodar de mayor a menor
 			return $cookies;
 		}
 
 		// } /Leer Cookies
 
+		// { Funcion para definir si una pestaña es Activa o Inactiva creando una cookie
+
 		function active() {
 			var date = new Date();
 			date.setTime(date.getTime() + (60 * 1000));
-			$.cookie('ndoplus.active.' + $now, 1, { path: '/', expires: date });
-			setTimeout(active,59000);
-			console.log('Pestaña Activa')
+			$.cookie('plus.active', $now, { path: '/', expires: date });
+			activetime = setTimeout(active,59900);
+			console.log('Cookie plus.active Creada');
+			console.log('plus.active $Now: ',$now);
 		}
 
+		// } /Activa, Inactiva
+
+		// { Función para saber si la ventana actual es la activa o más reciente
+
+		function isactive() {
+
+			var $thisone = $('#wrapper.ndoplus').length;
+			var $active = $.cookie('plus.active') ? parseInt($.cookie('plus.active')) : 0;
+
+			setTimeout(isactive,5000);
+
+			if ($thisone) {
+				//Esta es la pestaña activa
+				$('body').prepend('Pestaña Actual ' + $now + '<br/>');
+				return true;
+			}
+
+			else if (!$active) {
+				console.log('No hay otra pestaña activa y esta está minimizada');
+				$('body').prepend('No hay ninguna pestaña activa, actualizando más actual.' + $now + ' vs ' + $active + '<br/>');
+				var $currentcookies = getcookies();
+
+				if($currentcookies[0] === $now) {
+					$('body').prepend('Esta es la pestaña más actual: ' + $now + '<br/>');
+					cnow();
+					active();
+					backtab();
+					return true;
+				}
+
+			}
+
+			else {
+
+				$('body').prepend('Hay otra pestaña activa: ' + $now + ' vs ' + $active + '<br/>');
+
+				if($now === $active && vis() === true) {
+					$('body').prepend('Esta es la pestaña más actual: ' + $now + '<br/>');
+					restart();
+					return true;
+				}
+
+				else if($now === $active && vis() === false) {
+					console.log('Pestaña es la más actual pero está minimizada 55v55.');
+					$('body').prepend('Pestaña es la más actual pero está minimizada <br/>');
+					cnow();
+					active();
+					backtab();
+				}
+
+				//Esto jamás deberia ocurrir, pero nunca se sabe así que...
+				else if ($now > $active && vis() === true) {
+					//Ejecutar todo
+					console.log('Actual es mayor qeu activo y está enfocada la pestaña.');
+					restart();
+					return true;
+				}
+
+				return false;
+			}
+
+			console.log('This One: ',$thisone)
+			console.log('Other One: ',$active)
+			return false;
+		}
+
+		// } /Reciente o activa
+
+
+		// { Función para saber si la pestaña está activa \\ @Denys Séguret - http://stackoverflow.com/a/19519701
+		
+		var vis = (function() {
+			var stateKey, eventKey, keys = {
+				hidden: "visibilitychange",
+				webkitHidden: "webkitvisibilitychange",
+				mozHidden: "mozvisibilitychange",
+				msHidden: "msvisibilitychange"
+			};
+			for (stateKey in keys) {
+				if (stateKey in document) {
+					eventKey = keys[stateKey];
+					break;
+				}
+			}
+			return function(c) {
+				if (c) document.addEventListener(eventKey, c);
+				return !document[stateKey];
+			}
+		})();
+
+		var nvisible = vis();	//Regresa el estado actual de la pestaña true : false
+		
+		//Ejecuta una función al pasar a segundo plano la pestaña y viceversa
+		vis(function(){
+			console.log('Switch Function: ',vis());
+
+			if(vis() === true) {
+				//Pestaña Activada
+				console.log('Switch Pestaña Activada');
+				restart();
+				console.log(getcookies());
+			}
+			else {
+				backtab();
+				console.log('Switch Pestaña Desactivada');
+			}
+
+ 			document.title = vis() ? '[Visible] / ' + ztitle : '[No Visible] / '  + ztitle;
+		});							//Activa 	:	No Activa
+									//Se ejecuta por primera vez al pasar a inactiva y nuevamente al pasar a activa.
+		
+		// } /Activa
+
+
+		//Si la pestaña está activa, agrega una clase adicional a #wrapper
+		function nowactive() {
+			console.log('Nowactive() Agregada Clase ndoplus a #wrapper')
+			$('#wrapper').addClass('ndoplus');
+		}
+
+		//Si está inactiva, remueve la clase
 		function inactive() {
-			$.removeCookie('ndoplus.active.' + $now, { path: '/' });
-			console.log('Pestaña inactiva');
+			console.log('Inactive() Removida clase ndoplus de #wrapper')
+			$('#wrapper').removeClass('ndoplus');
 		}
 
 
-		cnow();
-		active();
-		console.log('Return: ',getcookies());
+		// { Pestaña en Background
+
+		function backtab() {
+			console.log('Pestaña Secundaria.');
+			console.log('Back: ',$now);
+
+			//Eliminamos los otros timers
+			clearTimeout(activetime);
+			clearTimeout(cnowtime);
+
+			//Removemos clase
+			inactive();
+
+			//Revisamos si es la pestaña activa y removemos cookie si así es
+			//var $active = $.cookie('plus.active') ? parseInt($.cookie('plus.active')) : 0;
+
+			//if($active === $now) {
+			//	$.cookie('plus.active', 1, { path: '/', expires: date });
+			//}
+
+			//Adelantamos el reloj 60 segundos
+			var date = new Date();
+			date.setTime(date.getTime() + (60 * 1000));
+
+			//Actualizamos la cookie con la hora actual
+			$.cookie('ndoplus.' + $now, 1, { path: '/', expires: date });
+
+			//Renovamos Función
+			backtabtime = setTimeout(backtab,59900);
+
+			console.log('Background Cookie Creada ndoplus.',$now);
+		}
+
+		// } /Background
+
+
+		// { Ejecutar todo si la ventana está activa
+
+		function restart() {
+			console.log('Función restarto nya');
+			clearTimeout(backtabtime);
+			nowactive();
+			cnow();
+			active();
+			nowactive();
+			//backtab();
+			//console.log('Return: ',getcookies());
+			console.log('Finish Starto Nya!');
+		}
+
+		// } /Ejecutar
+
+
+		//Ejecutar por defecto si la pestaña está activa
+		if(nvisible === true) {
+			console.log('Encendida por Defecto.');
+			nowactive();
+			active();
+			isactive(); //Debugg
+		}
+		//Inactiva por defecto
+		else {
+			console.log('Desactivada por Defecto.');
+			backtab();
+		}
+
 
 
 	//} /Transición
+
 
 
 	// { Buscar Cambios en el DOM
@@ -694,7 +870,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 					};
 
 					//La variable 'entry.added' regresa un Nodelist, tomamos el id del primer elemento
-					var id = ((entry.added.item(1)||{}).id)||false;
+					var id = ((entry.added.item(0)||{}).id)||false;
 
 					//Si existe, buscamos links nuevamente.
 					if(id) {
@@ -718,14 +894,9 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	// } /Cambios DOM
 
-	// La siguiente parte es bastante interesante
-	// En total tengo que hacer 3 AJAX Calls
-	// Notificaciones, feeds y portada
-	// Lo ideal seria ejecutarlas al mismo tiempo
-	// Para evitar que primero llegue una notificación y después se actualize el feed
-	// Y esta fue la única forma que pude idear
-	// No es para nada ortodoxa, así que si alguien conoce una mejor forma para
-	// Sincronizar las Ajax Calls, soy todo oídos.
+
+
+	// Sincronizar Ajax Calls
 
 	//Pasamos las 3 ajax call por medio de funciones.
 
@@ -881,9 +1052,9 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 				})
 				.then(function() {	//Success
-					setTimeout(update,zrefresh);
+					//setTimeout(update,zrefresh);
 				}, function() {		//Error
-					setTimeout(update,zrefresh);
+					//setTimeout(update,zrefresh);
 				});
 
 			}
@@ -913,6 +1084,31 @@ console.log('Naruho.do Plus + Starto Nya!');
 		update(),
 		console.log('Ejecutadas todas las funciones.')
 	);
+console.log('Unloads');
+
+	$( window ).unload(function() {
+		//$.removeCookie('plus.active', { path: '/' });
+		var $active = $.cookie('plus.active') ? parseInt($.cookie('plus.active')) : 0;
+
+		if($active === $now) {
+			$.removeCookie('plus.active', { path: '/' });
+		}
+
+		$.removeCookie('ndoplus.' + $now, { path: '/' });
+	});
+
+	window.onbeforeunload = function(e) {
+		//$.removeCookie('plus.active', { path: '/' });
+		var $active = $.cookie('plus.active') ? parseInt($.cookie('plus.active')) : 0;
+
+		if($active === $now) {
+			$.removeCookie('plus.active', { path: '/' });
+		}
+
+		$.removeCookie('ndoplus.' + $now, { path: '/' });
+	};
+
+console.log('Unloads Finish');
 	
 // { /Ejecutar
 
