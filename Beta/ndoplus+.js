@@ -1,9 +1,9 @@
 ﻿// ==UserScript==
-// @name        Naruho.do Plus ++
+// @name        Naruho.do Plus +
 // @namespace   Zeyth
 // @description Agrega funciones adicionales a Naruho.do
 // @include     https://naruho.do/*
-// @version     1.0.2
+// @version     1.0.4
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @require		https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js
 // @require		https://greasyfork.org/scripts/5233-jquery-cookie-plugin/code/jQuery_Cookie_Plugin.js?version=18550
@@ -20,29 +20,31 @@ console.log('Naruho.do Plus + Starto Nya!');
 	
 	var zrefresh = 5000;	//Frecuencia en la que se repiten los script de auto actualizar
 							//En milisegundos, tiempo por defecto 5000 que es igual a 5 segundos
-							//No es recomendado bajarlo a menos de 1000 (1 segundo)
+							//No puede ser menos de 2000 (2 segundos)
 	
-	var znotif = 'http://zeyth.net46.net/ndoplus/Notification.wav';			//Sonido que se escuchará al recibir una notificación
+	var znotif = 'http://zeyth.totalh.net/ndoplus/Notification.wav';		//Sonido que se escuchará al recibir una notificación
 																			//Sólo se aceptan los formatos WAV y MP3
 							
-	var zfeed = 'http://zeyth.net46.net/ndoplus/Feed.wav';					//Sonido que se escuchará al recibir un comentario nuevo en un feed
+	var zfeed = 'http://zeyth.totalh.net/ndoplus/Feed.wav';					//Sonido que se escuchará al recibir un comentario nuevo en un feed
 																			//Sólo se aceptan los formatos WAV y MP3
+
+	var soundON = 1;														//Sonido Encendido 1 / Apagado 0
 	
 // } /Valores por defecto
 
 
 // { Declaramos variables globales
 	
-	var ztitle = document.title;			//Título de la página
-	var zurl = window.location.pathname;	//Localización de la página
-	var zlogged = true;						//Iniciada sesión
+	var ztitle = document.title.split(' ')[0] + ' - Naruho.do +';	//Título de la página
+	var zurl = window.location.pathname;						//Localización de la página
+	var zlogged = true;											//Iniciada sesión
 
 	if($('#user_actions li.register').length) {
-		zlogged = false;					//Sin iniciar sesión
+		zlogged = false;										//Sin iniciar sesión
 	}
 
-	var $version = '1.0.0/Illya';			//Versión del script
-	
+	var $version = '1.0.3/Illya';								//Versión del script
+
 // } /Variables Globales
 
 
@@ -316,7 +318,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 // } /CSS
 
 
-// { Definimos funciones generales
+// { Definimos funciones
 
 	// { Localización
 
@@ -350,7 +352,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 			console.log('Control Panel');
 
 			//Revisamos que exista la barra de usuario
-			if($('#user_actions').length) {
+			if($('#user_actions').length && zlogged) {
 				//Icono del Panel de Control
 				$('#user_actions > ul > li.items').prepend('\
 					<div id="ndoplus" class="icon"> \
@@ -479,6 +481,9 @@ console.log('Naruho.do Plus + Starto Nya!');
 					$('.ui-tooltip').remove();	//Cerrar tooltip también.
 				});
 
+				//Brinca!
+				$('#plusicon').toggle('bounce');
+
 			}
 		}
 
@@ -512,10 +517,55 @@ console.log('Naruho.do Plus + Starto Nya!');
 		this.a.e.stop().animate({marginLeft:c},a?0:this.b.animate)))};f.fn.toggles=function(b){return this.each(function(){new k(f(this),b)})}}"function"===typeof define&&define.amd?define(["jquery"],l):l(h.jQuery||h.Zepto||h.ender||h.$||$)})(this);
 
 	// } /Jquery Toggles
-	
-// } /Funciones Generales
 
-// { Funciones Específicas
+
+	// { Alertas
+
+		//Creamos Contenedores
+		var notsound = document.createElement('audio');
+		var feedsound = document.createElement('audio');
+
+		//Dirección del Audio
+		notsound.src = znotif;
+		feedsound.src = zfeed;
+
+		//Precargamos
+		notsound.preload = 'auto';
+		feedsound.preload = 'auto';
+
+		//Volumen para evitar reventar oídos
+		notsound.volume = 0.5;
+		feedsound.volume = 0.5;
+
+		//Play Function
+		function playSound(z) {
+			console.log('Play Sound!');
+			if (z === 'not' && soundON) {
+				notsound.play();	//Notificación
+			}
+
+			else if (z === 'feed' && soundON) {
+				feedsound.play();	//Feed
+			}
+
+		}
+
+
+	// } /Alertas
+	
+
+	// { Cambiar Título
+
+		function switchtitle(title, newtitle) {
+			if (document.title == title) {
+				document.title = newtitle;
+			}
+			else {
+				document.title = title;
+			}
+		}
+
+	// } /Título
 
 	// { Expandir bit.ly Links
 
@@ -536,7 +586,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 						url: 'https://api-ssl.bitly.com/v3/expand?access_token=0d24189b58200b509140af5edffc0c89be378743&shortUrl=' + link,
 						async: true,
 						cache: true,
-						timeout: 10000,
+						timeout: 15000,
 					})
 					.done(function(json,status) {
 
@@ -596,7 +646,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 	//{ Transición de pestañas
 
 		var $now = 0;	//Definimos default timestamp
-		var backtabtime, cnowtime, activetime;
+		var backtabtime, cnowtime, activetime, isactivetime;
 
 		// { Creamos una cookie con la hora actual
 
@@ -619,6 +669,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 			$.cookie('ndoplus.' + $now, 1, { path: '/', expires: date });
 
 			//Renovamos si la ventana sigue activa
+			clearTimeout(cnowtime);
 			cnowtime = setTimeout(cnow,59900);
 
 			console.log('Cookie Creada ndoplus.',$now);
@@ -652,6 +703,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 			var date = new Date();
 			date.setTime(date.getTime() + (60 * 1000));
 			$.cookie('plus.active', $now, { path: '/', expires: date });
+			clearTimeout(activetime);
 			activetime = setTimeout(active,59900);
 			console.log('Cookie plus.active Creada');
 			console.log('plus.active $Now: ',$now);
@@ -666,7 +718,8 @@ console.log('Naruho.do Plus + Starto Nya!');
 			var $thisone = $('#wrapper.ndoplus').length;
 			var $active = $.cookie('plus.active') ? parseInt($.cookie('plus.active')) : 0;
 
-			setTimeout(isactive,5000);
+			clearTimeout(isactivetime);
+			isactivetime = setTimeout(isactive,5000);
 
 			if ($thisone) {
 				//Esta es la pestaña activa
@@ -681,6 +734,9 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 				if($currentcookies[0] === $now) {
 					$('body').prepend('Esta es la pestaña más actual: ' + $now + '<br/>');
+					clearTimeout(activetime);
+					clearTimeout(cnowtime);
+					clearTimeout(backtabtime);
 					cnow();
 					active();
 					backtab();
@@ -702,15 +758,22 @@ console.log('Naruho.do Plus + Starto Nya!');
 				else if($now === $active && vis() === false) {
 					console.log('Pestaña es la más actual pero está minimizada 55v55.');
 					$('body').prepend('Pestaña es la más actual pero está minimizada <br/>');
+					clearTimeout(activetime);
+					clearTimeout(cnowtime);
+					clearTimeout(backtabtime);
 					cnow();
 					active();
 					backtab();
+					return true;
 				}
 
 				//Esto jamás deberia ocurrir, pero nunca se sabe así que...
 				else if ($now > $active && vis() === true) {
 					//Ejecutar todo
 					console.log('Actual es mayor qeu activo y está enfocada la pestaña.');
+					clearTimeout(activetime);
+					clearTimeout(cnowtime);
+					clearTimeout(backtabtime);
 					restart();
 					return true;
 				}
@@ -812,6 +875,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 			$.cookie('ndoplus.' + $now, 1, { path: '/', expires: date });
 
 			//Renovamos Función
+			clearTimeout(backtabtime);
 			backtabtime = setTimeout(backtab,59900);
 
 			console.log('Background Cookie Creada ndoplus.',$now);
@@ -825,10 +889,11 @@ console.log('Naruho.do Plus + Starto Nya!');
 		function restart() {
 			console.log('Función restarto nya');
 			clearTimeout(backtabtime);
+			clearTimeout(isactivetime);
 			nowactive();
 			cnow();
 			active();
-			nowactive();
+			isactive();
 			//backtab();
 			//console.log('Return: ',getcookies());
 			console.log('Finish Starto Nya!');
@@ -842,7 +907,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 			console.log('Encendida por Defecto.');
 			nowactive();
 			active();
-			isactive(); //Debugg
+			//isactive(); //Debugg
 		}
 		//Inactiva por defecto
 		else {
@@ -859,37 +924,46 @@ console.log('Naruho.do Plus + Starto Nya!');
 	// { Buscar Cambios en el DOM
 
 		function stalker() {
+
 			//Elemento a observar
-			var node = document.querySelector("#long_feeds");
+			var node = document.querySelector("#long_feeds") ? document.querySelector("#long_feeds") : false;
+			console.log(document.querySelector("#long_feeds"));
 
-			var observer = new MutationObserver(function(mutations) {
-				mutations.forEach(function(mutation) {
+			console.log('Lel: ', node);
 
-					var entry = {
-						added: mutation.addedNodes
-					};
+			if (zlogged && node) {
+				//Elemento a observar
+				var node = document.querySelector("#long_feeds");
 
-					//La variable 'entry.added' regresa un Nodelist, tomamos el id del primer elemento
-					var id = ((entry.added.item(0)||{}).id)||false;
+				var observer = new MutationObserver(function(mutations) {
+					mutations.forEach(function(mutation) {
 
-					//Si existe, buscamos links nuevamente.
-					if(id) {
-						console.log('Nuevos Feeds Cargados');
-						bitly();
-						$('iframe').remove(); //Quitar
-					}
+						var entry = {
+							added: mutation.addedNodes
+						};
 
+						//La variable 'entry.added' regresa un Nodelist, tomamos el id del primer elemento
+						var id = ((entry.added.item(0)||{}).id)||false;
+
+						//Si existe, buscamos links nuevamente.
+						if(id) {
+							console.log('Nuevos Feeds Cargados');
+							bitly();
+							$('iframe').remove(); //Quitar
+						}
+
+					});
 				});
-			});
 
-			//Configuración
-			observer.observe(node, {
-				attributes: false,
-				childList: true,
-				characterData: false,
-				characterDataOldValue: false,
-				subtree: true
-			});
+				//Configuración
+				observer.observe(node, {
+					attributes: false,
+					childList: true,
+					characterData: false,
+					characterDataOldValue: false,
+					subtree: true
+				});
+			}
 		}
 
 	// } /Cambios DOM
@@ -902,7 +976,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	// { Notificaciones
 		function notifications() {
-			if(!GM_getValue('pnot') && location.where !== 'feed') {
+			if(!GM_getValue('pnot') && location.where !== 'feed' && zlogged) {
 				return $.ajax({
 							dataType: 'html',
 							url: '/hashtag/empty',
@@ -918,7 +992,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	// { Feeds
 		function feeds() {
-			if(!GM_getValue('pfeed')) {
+			if(!GM_getValue('pfeed') && location.where === 'feed') {
 				return $.ajax({
 							dataType: 'html',
 							url: location.url,
@@ -934,19 +1008,19 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	// { Portada
 		function front() {
-			if(!GM_getValue('pport')) {
+			if(!GM_getValue('pport') && location.where === 'main' && zlogged) {
 				return $.ajax({
 							dataType: 'json',
 							url: '/feeds/9999999999',
 							cache: false,
-							timeout: 4000,
+							timeout: zrefresh - 1000,
 						});
 			}
 			else {
 				return false;
 			}
 		}
-	// } /Portada
+	// } /Portada&& location.where === 'feed'
 
 	//Creamos un contenedor para las notificaciones
 	$('#notification').append('<span id="pnum" style=""></span>');
@@ -958,7 +1032,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 			if(!GM_getValue('pnot') || !GM_getValue('pfeed') || !GM_getValue('pport')) {
 				console.log('Notificaciones');
 
-				// Ejecutamos las ajax calls simultáneamente con ayuda de $.when()
+				// Ejecutamos las ajax calls simultáneamente
 				$.when(
 					notifications(),
 					feeds(),
@@ -973,7 +1047,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 					// { Notificaciones
 
 						//Script Activo ?
-						if(!GM_getValue('pnot')) {
+						if(!GM_getValue('pnot') && zlogged) {	//Notificaciones
 
 							//Si estamos en un feed y el script de feeds está ON, usamos el mismo request de actualizar feeds
 							if (location.where === 'feed' && !GM_getValue('pfeed')) {
@@ -985,11 +1059,12 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 							//Debug
 							//$('#notification .ndo-notify')[0].title = 'Notifications 0';
+
 							//Tomamos las notificaciones actuales
 							$oldnot = parseInt($('#notification .ndo-notify')[0].title.split(' ')[1]);
 
 							//Un vistazo al futuro
-							$newnot =  parseInt($notcont.find('#notification .ndo-notify')[0].title.split(' ')[1]);
+							$newnot = parseInt($notcont.find('#notification .ndo-notify')[0].title.split(' ')[1]);
 
 
 							//Comparamos los valores
@@ -998,11 +1073,21 @@ console.log('Naruho.do Plus + Starto Nya!');
 								//Si las notificaciones actuales son menores a las futuras || Actuales son mayor que nuevas, pero nuevas no son 0
 								if($oldnot < $newnot || $oldnot > $newnot && $newnot !== 0) {
 
+									//Hacemos ruido con la alerta
+									playSound('not');
+
 									//Cambiamos los valores
 									$('#notification .ndo-notify')[0].title = $notcont.find('#notification .ndo-notify')[0].title;
 									
 									//Volvemos colorida la notificación
 									$('#notification').addClass('new');
+
+									//Cambiamos el título
+									//var $title = '[' + $newnot + '] ' + ztitle;
+									var $title = $newnot + ' / ' + ztitle;
+
+									//titletime = setInterval(function(){switchtitle($title, '[' + $newnot + '] ' + 'Nueva Notificación!')}, 800);
+									titletime = setInterval(function(){switchtitle($title, $newnot + ' / ' + 'Nueva Notificación +')}, 900);
 
 									//Escondemos contenedor, agregamos el número
 									$('#pnum').effect('drop', {direction:'up'}, 250, function () {
@@ -1012,15 +1097,22 @@ console.log('Naruho.do Plus + Starto Nya!');
 									//Lo mostramos con animación.
 									$('#pnum').toggle('bounce', { times: 3 }, 'slow');
 
-									//Y hacemos ruido con la alerta
-									//{Sound}
-
 								}
-								//Si las notificaciones actuales son mayores a las nuevas y estas son 0
+								//Si las notificaciones actuales son mayores a las nuevas y las nuevas son 0
 								else if ($oldnot > $newnot && $newnot === 0) {
-									console.log('0 Futuro');
+									console.log('0 Notificaciones Futuras y Actuales más de 0');
 									//Remover clase new a #notification
-									//Colocar 0 a #pnum
+									$('#notification').removeClass('new');
+
+									//Cambiamos el contador oculto
+									$('#notification .ndo-notify')[0].title = $notcont.find('#notification .ndo-notify')[0].title;
+
+									//Escondemos nuestro contador
+									$('#pnum').toggle('fade').promise().done(function() {$('#pnum').html('0');});
+
+									//Regresamos al título original
+										document.title = ztitle;
+
 								}
 
 							}
@@ -1052,9 +1144,9 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 				})
 				.then(function() {	//Success
-					//setTimeout(update,zrefresh);
+					updatetime = setTimeout(update,zrefresh);
 				}, function() {		//Error
-					//setTimeout(update,zrefresh);
+					update();
 				});
 
 			}
@@ -1069,7 +1161,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 	// { Actualizar Feeds Principales
 	// } /Feeds Principales
 
-// } /Específicas
+// } /Funciones
 
 
 // { Ejecutamos funciones
@@ -1077,8 +1169,6 @@ console.log('Naruho.do Plus + Starto Nya!');
 	$(document).ready(
 		console.log('Ejecutar Funciones.'),
 		controlpanel(),
-		//Brinca
-		$('#plusicon').toggle('bounce'),
 		$('iframe').remove(),  //Quitar
 		stalker(),bitly(),
 		update(),
