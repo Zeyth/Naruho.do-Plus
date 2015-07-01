@@ -3,7 +3,7 @@
 // @namespace   Zeyth
 // @description Agrega funciones adicionales a Naruho.do
 // @include     https://naruho.do/*
-// @version     1.0.4
+// @version     1.0.5
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @require		https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js
 // @require		https://greasyfork.org/scripts/5233-jquery-cookie-plugin/code/jQuery_Cookie_Plugin.js?version=18550
@@ -35,7 +35,9 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 // { Declaramos variables globales
 	
-	var ztitle = document.title.split(' ')[0] + ' - Naruho.do +';	//Título de la página
+	var otitle = document.title;								//Título de la página
+	var ztitle = otitle.split(' ')[0] + ' - Naruho.do +';		//Título Activo
+	var xtitle = otitle.split(' ')[0] + ' - Naruho.do';			//Título Inactivo
 	var zurl = window.location.pathname;						//Localización de la página
 	var zlogged = true;											//Iniciada sesión
 
@@ -43,10 +45,9 @@ console.log('Naruho.do Plus + Starto Nya!');
 		zlogged = false;										//Sin iniciar sesión
 	}
 
-	var $version = '1.0.3/Illya';								//Versión del script
+	var $version = '1.0.5/Illya';								//Versión del script
 
 // } /Variables Globales
-
 
 // { CSS
 
@@ -309,8 +310,8 @@ console.log('Naruho.do Plus + Starto Nya!');
 			color:#FEFEFE; \
 			font-weight:bold; \
 			position:absolute; \
-			bottom:3px; \
-			right:7px; \
+			bottom:2px; \
+			right:6px; \
 			} \
 		</style>');
 	// { /Tooltip
@@ -342,6 +343,12 @@ console.log('Naruho.do Plus + Starto Nya!');
 				};
 			}
 		})();
+
+		//Títulos localización
+		if(location.where === 'main') {
+			ztitle = 'Naruho.do +';
+			xtitle = 'Naruho.do'
+		}
 
 	// } /Localización
 
@@ -645,8 +652,10 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	//{ Transición de pestañas
 
-		var $now = 0;	//Definimos default timestamp
-		var backtabtime, cnowtime, activetime, isactivetime;
+		var $now = 0;	//Default timestamp
+		var $oldnot = parseInt($('#notification .ndo-notify')[0].title.split(' ')[1]);	//Notificaciones
+		var $newnot = 0;
+		var backtabtime, cnowtime, activetime, isactivetime, titletime, updatetime;		//Variables de intervalos
 
 		// { Creamos una cookie con la hora actual
 
@@ -670,7 +679,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 			//Renovamos si la ventana sigue activa
 			clearTimeout(cnowtime);
-			cnowtime = setTimeout(cnow,59900);
+			cnowtime = setTimeout(cnow,58000);
 
 			console.log('Cookie Creada ndoplus.',$now);
 			console.log('ndoplus.xxxx $Now Final: ',$now);
@@ -704,7 +713,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 			date.setTime(date.getTime() + (60 * 1000));
 			$.cookie('plus.active', $now, { path: '/', expires: date });
 			clearTimeout(activetime);
-			activetime = setTimeout(active,59900);
+			activetime = setTimeout(active,58000);
 			console.log('Cookie plus.active Creada');
 			console.log('plus.active $Now: ',$now);
 		}
@@ -718,22 +727,23 @@ console.log('Naruho.do Plus + Starto Nya!');
 			var $thisone = $('#wrapper.ndoplus').length;
 			var $active = $.cookie('plus.active') ? parseInt($.cookie('plus.active')) : 0;
 
-			clearTimeout(isactivetime);
-			isactivetime = setTimeout(isactive,5000);
+			//clearTimeout(isactivetime);
+			//isactivetime = setTimeout(isactive,5000);
 
 			if ($thisone) {
 				//Esta es la pestaña activa
-				$('body').prepend('Pestaña Actual ' + $now + '<br/>');
+				//$('body').prepend('Pestaña Actual ' + $now + '<br/>');
 				return true;
 			}
 
 			else if (!$active) {
-				console.log('No hay otra pestaña activa y esta está minimizada');
-				$('body').prepend('No hay ninguna pestaña activa, actualizando más actual.' + $now + ' vs ' + $active + '<br/>');
+				//console.log('No hay otra pestaña activa y esta está minimizada');
+				//$('body').prepend('No hay ninguna pestaña activa, actualizando más actual.' + $now + ' vs ' + $active + '<br/>');
 				var $currentcookies = getcookies();
 
 				if($currentcookies[0] === $now) {
-					$('body').prepend('Esta es la pestaña más actual: ' + $now + '<br/>');
+					//$('body').prepend('Esta es la pestaña más actual: ' + $now + '<br/>');
+					document.title = ztitle;
 					clearTimeout(activetime);
 					clearTimeout(cnowtime);
 					clearTimeout(backtabtime);
@@ -747,17 +757,19 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 			else {
 
-				$('body').prepend('Hay otra pestaña activa: ' + $now + ' vs ' + $active + '<br/>');
+				//$('body').prepend('Hay otra pestaña activa: ' + $now + ' vs ' + $active + '<br/>');
 
 				if($now === $active && vis() === true) {
-					$('body').prepend('Esta es la pestaña más actual: ' + $now + '<br/>');
+					//$('body').prepend('Esta es la pestaña más actual: ' + $now + '<br/>');
+					document.title = ztitle;
 					restart();
 					return true;
 				}
 
 				else if($now === $active && vis() === false) {
-					console.log('Pestaña es la más actual pero está minimizada 55v55.');
-					$('body').prepend('Pestaña es la más actual pero está minimizada <br/>');
+					//console.log('Pestaña es la más actual pero está minimizada 55v55.');
+					//$('body').prepend('Pestaña es la más actual pero está minimizada <br/>');
+					document.title = ztitle;
 					clearTimeout(activetime);
 					clearTimeout(cnowtime);
 					clearTimeout(backtabtime);
@@ -770,7 +782,8 @@ console.log('Naruho.do Plus + Starto Nya!');
 				//Esto jamás deberia ocurrir, pero nunca se sabe así que...
 				else if ($now > $active && vis() === true) {
 					//Ejecutar todo
-					console.log('Actual es mayor qeu activo y está enfocada la pestaña.');
+					//console.log('Actual es mayor qeu activo y está enfocada la pestaña.');
+					document.title = ztitle;
 					clearTimeout(activetime);
 					clearTimeout(cnowtime);
 					clearTimeout(backtabtime);
@@ -778,18 +791,20 @@ console.log('Naruho.do Plus + Starto Nya!');
 					return true;
 				}
 
+				document.title = xtitle;
+
 				return false;
 			}
 
-			console.log('This One: ',$thisone)
-			console.log('Other One: ',$active)
+			//console.log('This One: ',$thisone)
+			//console.log('Other One: ',$active)
 			return false;
 		}
 
 		// } /Reciente o activa
 
 
-		// { Función para saber si la pestaña está activa \\ @Denys Séguret - http://stackoverflow.com/a/19519701
+		// { Función para saber si la pestaña está activa \\ @Denys Séguret
 		
 		var vis = (function() {
 			var stateKey, eventKey, keys = {
@@ -821,15 +836,22 @@ console.log('Naruho.do Plus + Starto Nya!');
 				console.log('Switch Pestaña Activada');
 				restart();
 				console.log(getcookies());
+				document.title = ztitle;
 			}
 			else {
+				document.title = xtitle;
 				backtab();
+				setTimeout(isactive,200);		
+				clearTimeout(isactivetime);	
+				isactivetime = setTimeout(isactive,3000);
+				
 				console.log('Switch Pestaña Desactivada');
 			}
 
- 			document.title = vis() ? '[Visible] / ' + ztitle : '[No Visible] / '  + ztitle;
-		});							//Activa 	:	No Activa
+ 			//document.title = vis() ? '[Visible] / ' + ztitle : '[No Visible] / '  + ztitle;
+ 									//Activa 	:	No Activa
 									//Se ejecuta por primera vez al pasar a inactiva y nuevamente al pasar a activa.
+		});							
 		
 		// } /Activa
 
@@ -876,7 +898,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 			//Renovamos Función
 			clearTimeout(backtabtime);
-			backtabtime = setTimeout(backtab,59900);
+			backtabtime = setTimeout(backtab,58000);
 
 			console.log('Background Cookie Creada ndoplus.',$now);
 		}
@@ -888,15 +910,22 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 		function restart() {
 			console.log('Función restarto nya');
+			//Eliminamos todos los contadores
 			clearTimeout(backtabtime);
 			clearTimeout(isactivetime);
+			clearInterval(titletime);
+
+			//Los volvemos a iniciar
 			nowactive();
 			cnow();
 			active();
-			isactive();
+
+			//Ejecutamos el script de notificaciones
+			update(2);
+			//isactive();
 			//backtab();
 			//console.log('Return: ',getcookies());
-			console.log('Finish Starto Nya!');
+			console.log('Finish restarto Nya!');
 		}
 
 		// } /Ejecutar
@@ -907,11 +936,15 @@ console.log('Naruho.do Plus + Starto Nya!');
 			console.log('Encendida por Defecto.');
 			nowactive();
 			active();
+			//Cambiamos el título para facilitar saber si el script está activo.
+			document.title = ztitle;
 			//isactive(); //Debugg
 		}
 		//Inactiva por defecto
 		else {
 			console.log('Desactivada por Defecto.');
+			document.title = xtitle;
+			isactive();
 			backtab();
 		}
 
@@ -927,9 +960,8 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 			//Elemento a observar
 			var node = document.querySelector("#long_feeds") ? document.querySelector("#long_feeds") : false;
-			console.log(document.querySelector("#long_feeds"));
 
-			console.log('Lel: ', node);
+			//console.log('Lel: ', node);
 
 			if (zlogged && node) {
 				//Elemento a observar
@@ -981,7 +1013,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 							dataType: 'html',
 							url: '/hashtag/empty',
 							cache: false,
-							timeout: 4000,
+							timeout: zrefresh - 500,
 						});
 			}
 			else {
@@ -997,7 +1029,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 							dataType: 'html',
 							url: location.url,
 							cache: false,
-							timeout: 4000,
+							timeout: zrefresh - 500,
 						});
 			}
 			else {
@@ -1013,7 +1045,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 							dataType: 'json',
 							url: '/feeds/9999999999',
 							cache: false,
-							timeout: zrefresh - 1000,
+							timeout: zrefresh - 500,
 						});
 			}
 			else {
@@ -1027,128 +1059,174 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	// { Actualizar
 
-		function update() {
+		function update($mode) {
+			clearTimeout(updatetime);
+			var $state = isactive();
+			$('body').prepend('Isactive: ' + $state + '<br/>');
 
 			if(!GM_getValue('pnot') || !GM_getValue('pfeed') || !GM_getValue('pport')) {
-				console.log('Notificaciones');
+				console.log('Empiezan Notificaciones');
 
-				// Ejecutamos las ajax calls simultáneamente
-				$.when(
-					notifications(),
-					feeds(),
-					front()	// Sé que puedo ahorrarme este request para las funciones actuales del script
-							// Pero "creo" que lo requeriré para funciones futuras, y por si alguien sólo activa portada sin notificaciones o feeds.
-				)
-				.done(function(noti,feed,front) {
-					console.log('AJAX When');
+				//La pestaña se acaba de abrir
+				if ($mode === 1) {
+					console.log('Primer RUN De Update');
 
-					var $notcont, $newnot, $oldnot, $newfeed, $oldfeed, $newfront, $oldfront;
+					//Si hay notificaciones las mostramos
+					if($oldnot) {
 
-					// { Notificaciones
+						//Volvemos colorida la notificación
+						$('#notification').addClass('new');
 
-						//Script Activo ?
-						if(!GM_getValue('pnot') && zlogged) {	//Notificaciones
+						//Cambiamos el título
+						document.title =  $oldnot + ' / ' + ztitle;
 
-							//Si estamos en un feed y el script de feeds está ON, usamos el mismo request de actualizar feeds
-							if (location.where === 'feed' && !GM_getValue('pfeed')) {
-								$notcont = $(feed[0]).find('#user_actions .items');
-							}
-							else {
-								$notcont = $(noti[0]).find('#user_actions .items');
-							}
+						//Escondemos contenedor, agregamos el número
+						$('#pnum').effect('drop', {direction:'up'}, 250, function () {
+							this.innerHTML = $oldnot;
+						});
 
-							//Debug
-							//$('#notification .ndo-notify')[0].title = 'Notifications 0';
+						//Mostramos el contador.
+						$('#pnum').toggle('bounce', { times: 3 }, 'slow');
 
-							//Tomamos las notificaciones actuales
-							$oldnot = parseInt($('#notification .ndo-notify')[0].title.split(' ')[1]);
+					}
 
-							//Un vistazo al futuro
-							$newnot = parseInt($notcont.find('#notification .ndo-notify')[0].title.split(' ')[1]);
+					//Revisamos en cierto tiempo si hay nuevas notificaciones
+					clearTimeout(updatetime);
+					updatetime = setTimeout(function(){update(2);},zrefresh);
+				}
 
+				//$Modo 2, Revisando las notificaciones futuras.
+				else if ($mode === 2 && $state === true) {
+					// Ejecutamos las ajax calls simultáneamente
+					$.when(
+						notifications(),
+						feeds(),
+						front()	// Sé que puedo ahorrarme este request para las funciones actuales del script
+								// Pero "creo" que lo requeriré para funciones futuras, y por si alguien sólo activa portada sin notificaciones o feeds.
+					)
+					.done(function(noti,feed,front) {
+						console.log('AJAX When');
 
-							//Comparamos los valores
-							if ($oldnot !== $newnot) {	//Los valores son distintos.
+						var $notcont, $newfeed, $oldfeed, $newfront, $oldfront;
 
-								//Si las notificaciones actuales son menores a las futuras || Actuales son mayor que nuevas, pero nuevas no son 0
-								if($oldnot < $newnot || $oldnot > $newnot && $newnot !== 0) {
+						// { Notificaciones
 
-									//Hacemos ruido con la alerta
-									playSound('not');
+							//Script Activo ?
+							if(!GM_getValue('pnot') && zlogged) {	//Notificaciones
 
-									//Cambiamos los valores
-									$('#notification .ndo-notify')[0].title = $notcont.find('#notification .ndo-notify')[0].title;
-									
-									//Volvemos colorida la notificación
-									$('#notification').addClass('new');
-
-									//Cambiamos el título
-									//var $title = '[' + $newnot + '] ' + ztitle;
-									var $title = $newnot + ' / ' + ztitle;
-
-									//titletime = setInterval(function(){switchtitle($title, '[' + $newnot + '] ' + 'Nueva Notificación!')}, 800);
-									titletime = setInterval(function(){switchtitle($title, $newnot + ' / ' + 'Nueva Notificación +')}, 900);
-
-									//Escondemos contenedor, agregamos el número
-									$('#pnum').effect('drop', {direction:'up'}, 250, function () {
-										this.innerHTML = $newnot;
-									});
-
-									//Lo mostramos con animación.
-									$('#pnum').toggle('bounce', { times: 3 }, 'slow');
-
+								//Si estamos en un feed y el script de feeds está ON, usamos el mismo request de actualizar feeds
+								if (location.where === 'feed' && !GM_getValue('pfeed')) {
+									$notcont = $(feed[0]).find('#user_actions .items');
 								}
-								//Si las notificaciones actuales son mayores a las nuevas y las nuevas son 0
-								else if ($oldnot > $newnot && $newnot === 0) {
-									console.log('0 Notificaciones Futuras y Actuales más de 0');
-									//Remover clase new a #notification
-									$('#notification').removeClass('new');
-
-									//Cambiamos el contador oculto
-									$('#notification .ndo-notify')[0].title = $notcont.find('#notification .ndo-notify')[0].title;
-
-									//Escondemos nuestro contador
-									$('#pnum').toggle('fade').promise().done(function() {$('#pnum').html('0');});
-
-									//Regresamos al título original
-										document.title = ztitle;
-
+								else {
+									$notcont = $(noti[0]).find('#user_actions .items');
 								}
 
+								//Debug
+								//$('#notification .ndo-notify')[0].title = 'Notifications 0';
+
+								//Tomamos las notificaciones actuales
+								$oldnot = parseInt($('#notification .ndo-notify')[0].title.split(' ')[1]);
+
+								//Un vistazo al futuro
+								$newnot = parseInt($notcont.find('#notification .ndo-notify')[0].title.split(' ')[1]);
+
+
+								//Comparamos los valores
+								if ($oldnot !== $newnot) {	//Los valores son distintos.
+
+									//Si las notificaciones actuales son menores a las futuras || Actuales son mayor que nuevas, pero nuevas no son 0
+									if($oldnot < $newnot || $oldnot > $newnot && $newnot !== 0) {
+
+										//Cambiamos los valores
+										$('#notification .ndo-notify')[0].title = $notcont.find('#notification .ndo-notify')[0].title;
+										
+										//Volvemos colorida la notificación
+										$('#notification').addClass('new');
+
+										//Cambiamos el título
+										//var $title = '[' + $newnot + '] ' + ztitle;
+										var $title = $newnot + ' / ' + ztitle;
+
+										//titletime = setInterval(function(){switchtitle($title, '[' + $newnot + '] ' + 'Nueva Notificación!')}, 800);
+
+										//Si la página está minimizada, intercambiamos el título
+										if(vis() === false) {
+											clearInterval(titletime);
+											document.title = $title;
+											titletime = setInterval(function(){switchtitle($title, $newnot + ' / ' + 'Nueva Notificación +')}, 900);
+										}
+										else {
+											document.title = $title;
+										}
+
+										//Escondemos contenedor, agregamos el número
+										$('#pnum').effect('drop', {direction:'up'}, 250, function () {
+											this.innerHTML = $newnot;
+										});
+
+										//Hacemos ruido con la alerta
+										playSound('not');
+
+										//Mostramos el contador.
+										$('#pnum').toggle('bounce', { times: 3 }, 'slow');
+
+									}
+									//Si las notificaciones actuales son mayores a las nuevas y las nuevas son 0
+									else if ($oldnot > $newnot && $newnot === 0) {
+										console.log('0 Notificaciones Futuras y Actuales más de 0');
+										//Remover clase new a #notification
+										$('#notification').removeClass('new');
+
+										//Cambiamos el contador oculto
+										$('#notification .ndo-notify')[0].title = $notcont.find('#notification .ndo-notify')[0].title;
+
+										//Escondemos nuestro contador
+										$('#pnum').hide('fade').promise().done(function() {$('#pnum').html('');});
+
+										//Regresamos al título original
+											document.title = ztitle;
+
+									}
+
+								}
+								else {
+									//Mismo valor, no hay necesidad de hacer nada
+									//Se puede omitir todo este ELSE, pero me gusta escribir comentarios.
+									//Lel
+								}
+
+								console.log('Notificaciones Futuras: ',$newnot);
+
 							}
-							else {
-								//Mismo valor, no hay necesidad de hacer nada
-								//Se puede omitir todo este ELSE, pero me gusta escribir comentarios.
-								//Lel
-							}
 
-							console.log($newnot);
-
-						}
-
-					// } /Notificaciones
+						// } /Notificaciones
 
 
-					// { Feeds
+						// { Feeds
 
-						//console.log(feed[0]);
+							//console.log(feed[0]);
 
-					// } /Feeds
+						// } /Feeds
 
 
-					// { Portada
+						// { Portada
 
-						//console.log(front[0].html);
+							//console.log(front[0].html);
 
-					// } /Portada
+						// } /Portada
 
-				})
-				.then(function() {	//Success
-					updatetime = setTimeout(update,zrefresh);
-				}, function() {		//Error
-					update();
-				});
+					})
+					.then(function() {	//Success
+						updatetime = setTimeout(function(){update(2);},zrefresh);
+					}, function() {		//Error
+						update(2);
+					});
+				}
 
+				else {
+					updatetime = setTimeout(function(){update(2);},zrefresh);
+				}
 			}
 
 		}
@@ -1171,7 +1249,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 		controlpanel(),
 		$('iframe').remove(),  //Quitar
 		stalker(),bitly(),
-		update(),
+		update(1),
 		console.log('Ejecutadas todas las funciones.')
 	);
 console.log('Unloads');
