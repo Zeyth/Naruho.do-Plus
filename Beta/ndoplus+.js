@@ -1,9 +1,9 @@
 ﻿// ==UserScript==
-// @name        Naruho.do Plus +
+// @name        Naruho.do Plus ++
 // @namespace   Zeyth
 // @description Agrega funciones adicionales a Naruho.do
 // @include     https://naruho.do/*
-// @version     1.0.5
+// @version     1.0.6
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @require		https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js
 // @require		https://greasyfork.org/scripts/5233-jquery-cookie-plugin/code/jQuery_Cookie_Plugin.js?version=18550
@@ -18,19 +18,43 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 // { Valores por defecto, pueden cambiarlos directamente o por medio del panel de control, los valores del panel de control tienen prioridad. 
 	
-	var zrefresh = 5000;	//Frecuencia en la que se repiten los script de auto actualizar
-							//En milisegundos, tiempo por defecto 5000 que es igual a 5 segundos
-							//No puede ser menos de 2000 (2 segundos)
+	window['zrefresh'] = 10000;	//Frecuencia en la que se repiten los script de auto actualizar
+								//En milisegundos, tiempo por defecto 10000 que es igual a 10 segundos
+								//No puede ser menos de 2000 (2 segundos)
 	
-	var znotif = 'http://zeyth.totalh.net/ndoplus/Notification.wav';		//Sonido que se escuchará al recibir una notificación
-																			//Sólo se aceptan los formatos WAV y MP3
+	window['znotif'] = 'http://zeyth.totalh.net/ndoplus/Notification.wav';		//Sonido que se escuchará al recibir una notificación
+																				//Sólo se aceptan los formatos WAV y MP3
 							
-	var zfeed = 'http://zeyth.totalh.net/ndoplus/Feed.wav';					//Sonido que se escuchará al recibir un comentario nuevo en un feed
-																			//Sólo se aceptan los formatos WAV y MP3
+	window['zfeed'] = 'http://zeyth.totalh.net/ndoplus/Feed.wav';				//Sonido que se escuchará al recibir un comentario nuevo en un feed
+																				//Sólo se aceptan los formatos WAV y MP3
 
-	var soundON = 1;														//Sonido Encendido 1 / Apagado 0
+	window['soundON'] = 1;														//Sonido Encendido 1 / Apagado 2
 	
 // } /Valores por defecto
+
+// { Valores personalizados del panel de control
+
+	//Sí no hay configuración personalizada, usar default.
+	function setConfig($opt) {
+		window[$opt] = GM_getValue($opt) ? GM_getValue($opt) : window[$opt];
+	}
+
+	setConfig('zrefresh');
+	setConfig('znotif');
+	setConfig('zfeed');
+	setConfig('soundON');
+
+	//Verificamos que zrefresh no sea menor que 2 segundos
+	if(zrefresh < 2000) {
+		zrefresh = 5000;
+	}
+
+	console.log('Config: ',znotif);
+	console.log('Config: ',zfeed);
+	console.log('Config: ',zrefresh);
+	console.log('Config: ',soundON);
+
+// } /Personalizados
 
 
 // { Declaramos variables globales
@@ -45,7 +69,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 		zlogged = false;										//Sin iniciar sesión
 	}
 
-	var $version = '1.0.5/Illya';								//Versión del script
+	var $version = '1.0.6/Illya';								//Versión del script
 
 // } /Variables Globales
 
@@ -277,6 +301,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 	// { /Bit.ly Links CSS
 
 	// { Tooltip
+
 		$('HEAD').append('<style type="text/css"> \
 			/* Tooltip */ \
 			.ui-tooltip { \
@@ -314,6 +339,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 			right:6px; \
 			} \
 		</style>');
+		
 	// { /Tooltip
 
 // } /CSS
@@ -323,7 +349,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	// { Localización
 
-		var location = (function() {
+		var $location = (function() {
 			if(zurl.match(/\/message\/[0-9]+$/)) {
 				return {
 					"where": "feed",
@@ -345,12 +371,16 @@ console.log('Naruho.do Plus + Starto Nya!');
 		})();
 
 		//Títulos localización
-		if(location.where === 'main') {
+		if($location.where === 'main') {
 			ztitle = 'Naruho.do +';
 			xtitle = 'Naruho.do'
 		}
 
 	// } /Localización
+
+	// { Reverse Array
+		$.fn.reverse = [].reverse;
+	// } /Reverse
 
 	// { Control Panel
 
@@ -411,10 +441,10 @@ console.log('Naruho.do Plus + Starto Nya!');
 						GM_deleteValue($script);
 						switch ($script) {
 							case "pnot":
-							update();
+							update(1);
 							break;
 							case "pbitly":
-							stalker(); bitly();
+							bitly();
 							break;
 							default:
 						}
@@ -584,51 +614,53 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 				$.each(zlink, function(index,link) {
 
-					var $link = this;			//Referimos al link actual.
-					$($link).addClass('plus');	//Agregamos nueva clase
+					if(link.href !== window.location.href) {
+						var $link = this;			//Referimos al link actual.
+						$($link).addClass('plus');	//Agregamos nueva clase
 
-					$.ajax({
-						type: 'GET',
-						dataType: 'json',
-						url: 'https://api-ssl.bitly.com/v3/expand?access_token=0d24189b58200b509140af5edffc0c89be378743&shortUrl=' + link,
-						async: true,
-						cache: true,
-						timeout: 15000,
-					})
-					.done(function(json,status) {
+						$.ajax({
+							type: 'GET',
+							dataType: 'json',
+							url: 'https://api-ssl.bitly.com/v3/expand?access_token=0d24189b58200b509140af5edffc0c89be378743&shortUrl=' + link.href,
+							async: true,
+							cache: true,
+							timeout: 15000,
+						})
+						.done(function(json,status) {
 
-						var url = json.data.expand[0].long_url;	//Link Real
-						var url2 = url;							//Link a Mostrar
+							var url = json.data.expand[0].long_url;	//Link Real
+							var url2 = url;							//Link a Mostrar
 
-						//Si el link es muy largo, lo cortamos.
-						var llength = url.length;
-						if (llength > 70) {
-							url2 = url.substring(0,30) + '...' + url.slice(-31);
-						}
-
-						$link.href=url;
-						$link.innerHTML=url2;
-
-						//Revisar si es imagen o link
-						checkimage(url, function(isimage) {
-
-						    if (isimage === "True") {
-
-								$($link).addClass('zimg');	//Es Imágen
-
+							//Si el link es muy largo, lo cortamos.
+							var llength = url.length;
+							if (llength > 70) {
+								url2 = url.substring(0,30) + '...' + url.slice(-31);
 							}
-							else {
 
-								$($link).addClass('zlink');	//Es Página Web
+							$link.href=url;
+							$link.innerHTML=url2;
 
-							}
+							//Revisar si es imagen o link
+							checkimage(url, function(isimage) {
+
+							    if (isimage === "True") {
+
+									$($link).addClass('zimg');	//Es Imágen
+
+								}
+								else {
+
+									$($link).addClass('zlink');	//Es Página Web
+
+								}
+							});
+
+						})
+						.error(function(data,status,error) {
+							console.log(data,status,error);
+							$($link).addClass('zerror');	//Error
 						});
-
-					})
-					.error(function(data,status,error) {
-						console.log(data,status,error);
-						$($link).addClass('zerror');	//Error
-					});
+					}
 				});
 			}
 
@@ -653,8 +685,11 @@ console.log('Naruho.do Plus + Starto Nya!');
 	//{ Transición de pestañas
 
 		var $now = 0;	//Default timestamp
-		var $oldnot = parseInt($('#notification .ndo-notify')[0].title.split(' ')[1]);	//Notificaciones
+		var $oldnot = 0;
 		var $newnot = 0;
+		if(zlogged){
+			$oldnot = parseInt($('#notification .ndo-notify')[0].title.split(' ')[1]);	//Notificaciones
+		}
 		var backtabtime, cnowtime, activetime, isactivetime, titletime, updatetime;		//Variables de intervalos
 
 		// { Creamos una cookie con la hora actual
@@ -963,7 +998,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 			//console.log('Lel: ', node);
 
-			if (zlogged && node) {
+			if (node) {
 				//Elemento a observar
 				var node = document.querySelector("#long_feeds");
 
@@ -980,7 +1015,11 @@ console.log('Naruho.do Plus + Starto Nya!');
 						//Si existe, buscamos links nuevamente.
 						if(id) {
 							console.log('Nuevos Feeds Cargados');
-							bitly();
+
+							$.when(bitly()).then(function() {
+								resimg();
+							});
+
 							$('iframe').remove(); //Quitar
 						}
 
@@ -1008,7 +1047,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	// { Notificaciones
 		function notifications() {
-			if(!GM_getValue('pnot') && location.where !== 'feed' && zlogged) {
+			if(!GM_getValue('pnot') && $location.where !== 'feed' && zlogged) {
 				return $.ajax({
 							dataType: 'html',
 							url: '/hashtag/empty',
@@ -1024,10 +1063,10 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	// { Feeds
 		function feeds() {
-			if(!GM_getValue('pfeed') && location.where === 'feed') {
+			if(!GM_getValue('pfeed') && $location.where === 'feed') {
 				return $.ajax({
 							dataType: 'html',
-							url: location.url,
+							url: $location.url,
 							cache: false,
 							timeout: zrefresh - 500,
 						});
@@ -1040,7 +1079,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	// { Portada
 		function front() {
-			if(!GM_getValue('pport') && location.where === 'main' && zlogged) {
+			if(!GM_getValue('pport') && $location.where === 'main' && zlogged) {
 				return $.ajax({
 							dataType: 'json',
 							url: '/feeds/9999999999',
@@ -1052,7 +1091,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 				return false;
 			}
 		}
-	// } /Portada&& location.where === 'feed'
+	// } /Portada&& $location.where === 'feed'
 
 	//Creamos un contenedor para las notificaciones
 	$('#notification').append('<span id="pnum" style=""></span>');
@@ -1062,7 +1101,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 		function update($mode) {
 			clearTimeout(updatetime);
 			var $state = isactive();
-			$('body').prepend('Isactive: ' + $state + '<br/>');
+			//$('body').prepend('Isactive: ' + $state + '<br/>');
 
 			if(!GM_getValue('pnot') || !GM_getValue('pfeed') || !GM_getValue('pport')) {
 				console.log('Empiezan Notificaciones');
@@ -1107,7 +1146,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 					.done(function(noti,feed,front) {
 						console.log('AJAX When');
 
-						var $notcont, $newfeed, $oldfeed, $newfront, $oldfront;
+						var $notcont, $newfeed, $oldfeed, $lastoldfeed, $lastnewfeed, $newfront, $oldfront;
 
 						// { Notificaciones
 
@@ -1115,7 +1154,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 							if(!GM_getValue('pnot') && zlogged) {	//Notificaciones
 
 								//Si estamos en un feed y el script de feeds está ON, usamos el mismo request de actualizar feeds
-								if (location.where === 'feed' && !GM_getValue('pfeed')) {
+								if ($location.where === 'feed' && !GM_getValue('pfeed')) {
 									$notcont = $(feed[0]).find('#user_actions .items');
 								}
 								else {
@@ -1205,22 +1244,240 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 						// { Feeds
 
-							//console.log(feed[0]);
+							if(!GM_getValue('pfeed') && $location.where === 'feed') {
+
+
+								if(!$('#xlel').length) {
+									$('#long_feeds').prepend('<span id="xlel">Borrar Último Feed</span><br/>');
+									$('#xlel').click(function(){
+										$('#long_feeds .comments ul li').last().remove();
+									});
+								}
+
+								if(!$('#xlel2').length) {
+									$('#long_feeds').prepend('<span id="xlel2">Borrar Feeds</span><br/>');
+									$('#xlel2').click(function(){
+										$('#long_feeds .comments ul li').remove();
+									});
+								}
+
+								if(!$('#xlel3').length) {
+									$('#long_feeds').prepend('<span id="xlel3">Cambiar último ID</span><br/>');
+									$('#xlel3').click(function(){
+										$('#long_feeds .comments ul li').last()[0].id='#ndo-comment-99999';
+									});
+								}
+								
+								console.log('Script Feed');
+								//Feeds Actuales
+								$oldfeed = $('#long_feeds .comments ul li');
+
+								//Mensaje más reciente
+								if($oldfeed.length) {
+									$lastoldfeed = parseInt($oldfeed.last()[0].id.split('-')[2]);
+								}
+
+								//Feeds Futuros
+								$newfeed = $(feed[0]).find('#long_feeds .comments ul li');
+
+								//Mensaje más reciente
+								if($newfeed.length) {
+									$lastnewfeed = parseInt($newfeed.last()[0].id.split('-')[2]);
+								}
+
+
+								console.log('Feeds Actuales: ',$oldfeed.length,' Feeds Futuros: ',$newfeed.length);
+								console.log($lastoldfeed,' vs ',$lastnewfeed);
+
+
+								//No hay respuestas actuales y sí futuras || La última respuesta actual es más reciente que la futura
+								if(!$oldfeed.length && $newfeed.length > 0 || $lastoldfeed > $lastnewfeed) {
+									console.log('No hay feeds actuales y sí futuros');
+
+									//Ocultamos los nuevos feeds
+									$newfeed.hide();
+
+									//Los colocamos en la página actual
+									$('#long_feeds .comments ul').html($newfeed);
+
+									//Si la página está minimizada, intercambiamos el título
+									if(vis() === false) {
+										clearInterval(titletime);
+										document.title = 'Nueva Respuesta +';
+										titletime = setInterval(function(){switchtitle(ztitle, 'Nueva Respuesta +')}, 900);
+									}
+
+									//Sonido
+									playSound('feed');
+
+									//Y los mostramos
+									$newfeed.show('blind');									
+
+									//Rebind Functions
+									location.assign('javascript:ndo.events.feeds($(\'.comments\'));void(0)');
+									
+								}
+
+								//Existen feeds actuales y respuestas nuevas
+								else if($lastoldfeed < $lastnewfeed) {
+									console.log('Hay feeds actuales y el futuro es más reciente.');
+									//console.log('#ndo-comment-' + $lastoldfeed);
+
+									//Agarramos sólo los nuevos mensajes
+									$newfeed = $newfeed.filter('#ndo-comment-' + $lastoldfeed).nextAll();
+
+									//Los escondemos
+									$newfeed.hide();
+
+									//Colocamos en la página actual
+									$('#long_feeds .comments ul').append($newfeed);
+
+									//Si la página está minimizada, intercambiamos el título
+									if(vis() === false) {
+										clearInterval(titletime);
+										document.title = 'Nueva Respuesta +';
+										titletime = setInterval(function(){switchtitle(ztitle, 'Nueva Respuesta +')}, 900);
+									}
+
+									//Sonido
+									playSound('feed');
+
+									//Y los mostramos
+									$newfeed.show('blind');
+
+									//Rebind Functions
+									location.assign('javascript:ndo.events.feeds($(\'.comments\'));void(0)');
+
+								}
+
+								//Pasó todas las verificaciones anteriores y la cantidad de mensajes aún es diferente
+								else if($oldfeed.length < $newfeed.length && $newfeed.length !== 0) {
+									//Para que esto ocurra alguien debe borrar un mensaje
+									//Ó el usuario debe comentar en un feed al mismo tiempo que otra persona
+									//Es difícil saber que sucedió, así que reemplazamos todo.
+
+									console.log('Feeds no coinciden, un mensaje eliminado.')
+									//Reemplazamos los mensajes
+									$('#long_feeds .comments ul').html($newfeed);						
+
+									//Rebind Functions
+									location.assign('javascript:ndo.events.feeds($(\'.comments\'));void(0)');
+
+								}
+
+								//Los mensajes son los mismos
+								else {
+									console.log('Feeds iguales.');
+									//Actualizamos la hora de los feeds ya que no tenemos nada mejor que hacer
+									var $oldfeed = $oldfeed.find('.date');
+									var $newfeed = $newfeed.find('.date');
+									//console.log($oldfeed,$newfeed);
+
+									$.map($oldfeed, function(v,id) {
+										$(v).replaceWith($newfeed[id]);
+									});
+
+									//console.log($oldfeed,$newfeed);
+								}
+
+								console.log('/Script Feed');
+							}
 
 						// } /Feeds
 
 
 						// { Portada
 
-							//console.log(front[0].html);
+							if($location.where === 'main' && zlogged && !GM_getValue('pport')) {
+								//console.log(front[0].html);
+								
+								//Mensajes Futuros
+								$newfront = $('<div/>');
+								$newfront.html(front[0].html);
 
+								//ID Mensaje Actual
+								var $lastfront = $('#long_feeds div').first()[0].id;
+								var $lastfrontint = parseInt($lastfront.split('-')[2]);
+
+								//ID Mensaje Futuro
+								var $lastnew = parseInt($newfront.find('div').first()[0].id.split('-')[2]);
+
+								console.log($lastfront,$lastfrontint,$lastnew);
+
+								//Feed más reciente
+								if($lastfrontint < $lastnew) {
+									console.log('Nuevo Feed Portada.');
+
+									//Tomamos todos los feeds nuevos
+									$newfront = $newfront.find('#' + $lastfront).prevAll();
+									console.log($newfront);
+
+									//Invertimos el Array ya que prevAll lo regresa alrevez
+									$newfront.reverse();
+
+									console.log($newfront);
+
+									//Los contamos
+									var $nnew = $newfront.length;
+									var $nfeed = [' nuevo feed','cargarlo.'];
+
+									if($nnew > 1) {
+										$nfeed = [' nuevos feeds','cargarlos.'];
+									}
+
+									if(!$('#plusfront').length) {
+										$('#board').prepend('<span id="plusfront" style="display:none;"></span>');
+									}
+
+									$('#plusfront').html('<span class="plusfalert"></span>Hay <b>' + $nnew + '</b>' + $nfeed[0] + ', click para ' + $nfeed[1]).off('click').show('bounce', { times: 2 }, 300).click(function() {
+										//Removemos Función para Evitar Duplicados
+										$('#plusfront').off('click');
+
+										//Contamos los mensajes actuales
+										var $frontnow = $('#long_feeds > div').length;
+
+										//Si son 30 o más
+										if($frontnow > 29) {
+											//Removemos la misma cantidad de mensajes actuales que los que agregaremos
+											console.log('Más de 30 feeds actualmente;');
+											$('#long_feeds > div').slice(-$nnew).remove();
+										}
+										
+										//Escondemos los Nuevos Feeds
+										$newfront.hide();
+
+										//Los Cargamos a la Página
+										$('#long_feeds').prepend($newfront);
+
+
+										//Y los mostramos
+										$newfront.show('slide', {direction: 'left'}, 400).promise().done(function() {
+											//Escondemos la Alerta
+											$('#plusfront').hide('fade', {}, 300);
+										});
+
+										//Rebind Functions
+										location.assign('javascript:ndo.events.feeds($(\'#long_feeds\'));void(0)');
+
+										console.log('Click Terminó');
+									});
+
+									console.log($nnew,$newfront);
+								}
+
+
+							}
+							
 						// } /Portada
+
+						//Liberamos algunas variables ya que no confio en JQuery
+						noti = null; feed = null; front = null; $oldfeed = null; $newfeed = null;
 
 					})
 					.then(function() {	//Success
 						updatetime = setTimeout(function(){update(2);},zrefresh);
 					}, function() {		//Error
-						update(2);
+						updatetime = setTimeout(function(){update(2);},200);
 					});
 				}
 
@@ -1233,11 +1490,197 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	// } /Actualizar
 
-	// { Actualizar Feeds
-	// } /Feeds
+	// { Resize Imágenes
 
-	// { Actualizar Feeds Principales
-	// } /Feeds Principales
+		// @Kabaka & MajorVictory87 \\ https://greasyfork.org/en/scripts/4269-drag-to-resize-image
+
+		// Find all img elements on the page and feed them to makeImageZoomable().
+		// Also, record the image's original width in imageData[] in case the user
+		// wants to restore size later.
+
+		var imageData = Array();
+		 
+		function findAllImages() {
+			var imgs = $('.message img:not(".plusimg")');
+
+			imgs.addClass('plusimg');
+
+			for (i = 0; i < imgs.length; i++) {
+
+				// We will populate this as the user interacts with the image, if they
+				// do at all.
+				imageData[imgs[i]] = {
+					zindex: imgs[i].style.zIndex,
+					width: imgs[i].style.width,
+					height: imgs[i].style.height,
+					position: imgs[i].style.position,
+					resized: 0,
+					resizable: true
+				};
+
+				makeImageZoomable(imgs[i]);
+			}
+
+		}
+
+
+		/*
+		 * Calculate the drag size for the event. This is taken directly from
+		 * honestbleeps's Reddit Enhancement Suite.
+		 *
+		 * @param e mousedown or mousemove event.
+		 * @return Size for image resizing.
+		 */
+		function getDragSize(e) {
+			return (p = Math.pow)(p(e.clientX - (rc = e.target.getBoundingClientRect()).left, 2) + p(e.clientY - rc.top, 2), .5);
+		}
+
+
+		/*
+		 * Get the viewport's vertical size. This should work in most browsers. We'll
+		 * use this when making images fit the screen by height.
+		 *
+		 * @return Viewport size.
+		 */
+		function getHeight() {
+			return window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+		}
+
+
+		function makeImageZoomable(imgTag) {
+			DragData = {};
+
+			imgTag.addEventListener('mousedown', function(e) {
+				if (e.ctrlKey != 0)
+					return true;
+
+				/*
+				 * This is so we can support the command key on Mac. The combination of OS
+				 * and browser changes how the key is passed to JavaScript. So we're just
+				 * going to catch all of them. This means we'll also be catching meta keys
+				 * for other systems. Oh well! Patches are welcome.
+				 */
+				if (e.metaKey != null) // Can be on some platforms
+					if (e.metaKey != 0)
+						return true;
+
+
+				if (e.button == 0) {
+					DragData.width = e.target.width;
+					DragData.delta = getDragSize(e);
+					DragData.dragging = true;
+
+					e.preventDefault();
+				}
+
+			}, true);
+
+			imgTag.addEventListener('contextmenu', function(e) {
+				if (imageData[e.target].resized != 0) {
+					imageData[e.target].resized = 0;
+					e.target.style.zIndex = imageData[e.target].zIndex;
+					e.target.style.maxWidth = e.target.style.width = imageData[e.target].width;
+					e.target.style.maxHeight = e.target.style.height = imageData[e.target].height;
+					e.target.style.position = imageData[e.target].position;
+
+					// Prevent the context menu from actually appearing.
+					e.preventDefault();
+					e.returnValue = false;
+					e.stopPropagation();
+					return false;
+				}
+				return true;
+
+			}, true);
+			imgTag.addEventListener('mousemove', function(e) {
+
+
+				if (DragData.dragging) {
+
+					clingdelta = Math.abs(DragData.delta - getDragSize(e));
+
+					if (clingdelta > 5) {
+
+						var prevwidth = parseInt(e.target.style.width.replace('px', ''));
+
+						e.target.style.maxWidth = e.target.style.width = Math.floor(((getDragSize(e)) * DragData.width / DragData.delta)) + "px";
+						e.target.style.maxHeight = '';
+						e.target.style.height = 'auto';
+						e.target.style.zIndex = 1000; // Make sure the image is on top.
+
+						if (e.target.style.position == '') {
+							e.target.style.position = 'relative';
+						}
+
+						imageData[e.target].resized = (prevwidth - parseInt(e.target.style.width.replace('px', '')));
+					}
+				}
+			}, false);
+
+			imgTag.addEventListener('mouseout', function(e) {
+
+				if (DragData.dragging) {
+					DragData.dragging = false;
+					e.preventDefault();
+					return false;
+				}
+
+				return true;
+
+			}, true);
+
+			imgTag.addEventListener('mouseup', function(e) {
+
+				if (DragData.dragging) {
+					DragData.dragging = false;
+					e.preventDefault();
+					return false;
+				}
+
+				return true;
+
+			}, true);
+
+			imgTag.addEventListener('click', function(e) {
+				if (e.ctrlKey != 0)
+					return true;
+
+				if (e.metaKey != null && e.metaKey != 0) // Can be on some platforms
+					return true;
+
+				if (!isNaN(imageData[e.target].resized) && imageData[e.target].resized != 0) {
+					e.preventDefault();
+					return false;
+				}
+
+				return true;
+			}, true);
+
+		}
+
+		function resimg() {
+
+			/*
+			 * Set up events for the given img element to make it zoomable via
+			 * drag to zoom. Most of this is taken directly from honestbleeps's
+			 * Reddit Enhancement Suite. Event functions are currently written
+			 * inline. For readability, I may move them. But the code is small
+			 * enough that I don't yet care.
+			 *
+			 * @param imgTag Image element.
+			 */
+			if(!GM_getValue('pimg')) {
+				findAllImages();
+			}
+
+		}
+
+		document.addEventListener('dragstart', function() {
+			return false
+		}, false);
+
+
+	// } /Resize Imágenes
 
 // } /Funciones
 
@@ -1246,13 +1689,16 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	$(document).ready(
 		console.log('Ejecutar Funciones.'),
-		controlpanel(),
 		$('iframe').remove(),  //Quitar
-		stalker(),bitly(),
+		controlpanel(),
+		stalker(),
+		bitly(),
+		resimg(),
 		update(1),
 		console.log('Ejecutadas todas las funciones.')
 	);
-console.log('Unloads');
+	
+	console.log('Unloads');
 
 	$( window ).unload(function() {
 		//$.removeCookie('plus.active', { path: '/' });
@@ -1276,7 +1722,7 @@ console.log('Unloads');
 		$.removeCookie('ndoplus.' + $now, { path: '/' });
 	};
 
-console.log('Unloads Finish');
+	console.log('Unloads Finish');
 	
 // { /Ejecutar
 
