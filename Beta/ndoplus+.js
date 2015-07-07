@@ -3,7 +3,7 @@
 // @namespace   Zeyth
 // @description Agrega funciones adicionales a Naruho.do
 // @include     https://naruho.do/*
-// @version     1.0.6
+// @version     1.0.7
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @require		https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js
 // @require		https://greasyfork.org/scripts/5233-jquery-cookie-plugin/code/jQuery_Cookie_Plugin.js?version=18550
@@ -29,6 +29,9 @@ console.log('Naruho.do Plus + Starto Nya!');
 																				//Sólo se aceptan los formatos WAV y MP3
 
 	window['soundON'] = 1;														//Sonido Encendido 1 / Apagado 2
+
+	window['zvolume'] = 0.5;													//Volumen de las notificaciones, número entre 0.0 y 1.0
+																				//1.0 = 100% volumen, 0.5 = 50%, 0.1 = 10%
 	
 // } /Valores por defecto
 
@@ -43,6 +46,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 	setConfig('znotif');
 	setConfig('zfeed');
 	setConfig('soundON');
+	setConfig('zvolume');
 
 	//Verificamos que zrefresh no sea menor que 2 segundos
 	if(zrefresh < 2000) {
@@ -53,6 +57,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 	console.log('Config: ',zfeed);
 	console.log('Config: ',zrefresh);
 	console.log('Config: ',soundON);
+	console.log('Config: ',zvolume);
 
 // } /Personalizados
 
@@ -69,7 +74,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 		zlogged = false;										//Sin iniciar sesión
 	}
 
-	var $version = '1.0.6/Illya';								//Versión del script
+	var $version = '1.0.7/Illya';								//Versión del script
 
 // } /Variables Globales
 
@@ -163,6 +168,40 @@ console.log('Naruho.do Plus + Starto Nya!');
 			z-index:0; \
 			} \
 			\
+			\
+			/* Configuración Extra */ \
+			\
+			#plusextra { \
+			padding:5px 8px 4px 12px; \
+			font-size:12px; \
+			} \
+			\
+			#plusextra span { \
+			background:#FF4400; \
+			display:inline-block; \
+			margin-right:2px; \
+			padding:0 4px 0 4px; \
+			margin-top:1px; \
+			transition: all 0.3s; \
+			} \
+			\
+			#plusextra span:hover { \
+			background:#FF5612; \
+			} \
+			\
+			#plusextra #plusreset { \
+			background:#8B0000; \
+			margin-top:5px; \
+			padding:2px 6px; \
+			width:45px; \
+			transition: all 0.4s; \
+			} \
+			\
+			#plusextra #plusreset:hover { \
+			background:#cc0000; \
+			} \
+			\
+			/* /Extra */ \
 			/* /Panel */ \
 		</style>');
 
@@ -342,6 +381,29 @@ console.log('Naruho.do Plus + Starto Nya!');
 		
 	// { /Tooltip
 
+	// { Main Feeds
+		$('HEAD').append('<style type="text/css"> \
+		#plusfront { \
+		display:block; \
+		position:relative; \
+		background-color:#5977F0; \
+		background-position:left; \
+		background-repeat:no-repeat; \
+		background-image:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACYAAAAkCAYAAADl9UilAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABZ0RVh0Q3JlYXRpb24gVGltZQAwNy8wNi8xNZdgQ/wAAAAcdEVYdFNvZnR3YXJlAEFkb2JlIEZpcmV3b3JrcyBDUzbovLKMAAAA1ElEQVRYhe3WoQrCUBTG8e86GajDC6uuuGS1it1gMOojCK7ZzSu+hWDwRay+wNKigoPVqVnBcNgnXsb59x1+3DO414wW1yccrPVvwLcUJk1h0hQmTWHSaDAbGNYoACTY5RTifAgxm/iMcQAcXqVhXeI2MChK3nuAdmJMFODwKtt1Po4jD5tlB9Oxj35gME/uyPKKAqt1YlleYbsvKZDPKKu8FQ/GmLec/ccUJk1h0poJiyMPu3UPw4EHADimFsmqS4HRLnF2zVzlL1OYNIVJU5g0Z2Ev+FUiDR1Wu8kAAAAASUVORK5CYII="); \
+		margin-left:86px; \
+		margin-bottom:8px; \
+		margin-top:-5px; \
+		border:1px solid #284FEC; \
+		box-shadow:2px 2px 2px #999999; \
+		padding:8px 10px 8px 48px; \
+		font-family:Verdana, Tahoma, Arial; \
+		font-size:13px; \
+		color:white; \
+		cursor:pointer !important; \
+		} \
+		</style>');
+	// } /
+
 // } /CSS
 
 
@@ -407,13 +469,16 @@ console.log('Naruho.do Plus + Starto Nya!');
 						<li id="pimg">Redimensionar Imágenes <div class="toggle toggle-modern"></div></li> \
 					</ul>\
 					<div id="plusconfig">Configuración Adicional</div> \
+					<div id="plusextra" style="display:none;"></div> \
 					<div id="plusversion"></div> \
-					<div id="plussecret" style="display:none;"></div> \
 				');
 
 				//Version LeL
 				$('#plusversion').html($version);
 				$('#plusversion').attr('title','<center><b style="font-size:13px;">Illyasviel von Einzbern Edition</b><br/></center><img src="http://i.imgur.com/MY0yuZI.png" style="margin-top:3px;"/><br/><center><i>Loli Powa!</i></center>');
+
+				//Configuración extra
+				$('#plusextra').html('Actualizar<br/><span id="zrefresh">Frecuencia Notificaciones</span><br/>Audio<br/><span id="soundON">Sonido</span><span id="zvolume">Volumen</span><span id="znotif">Notificación</span><span id="zfeed">Feeds</span><div id="plusreset">Reiniciar</div>');
 
 				//Interruptores
 
@@ -443,8 +508,17 @@ console.log('Naruho.do Plus + Starto Nya!');
 							case "pnot":
 							update(1);
 							break;
+							case "pfeed":
+							update(2);
+							break;
+							case "pport":
+							update(2);
+							break;
 							case "pbitly":
 							bitly();
+							break;
+							case "pimg":
+							resimg();
 							break;
 							default:
 						}
@@ -488,13 +562,38 @@ console.log('Naruho.do Plus + Starto Nya!');
 				$('#pbitly')[0].title = 'Expande los enlaces <b>bit.ly</b> a su url original y los categoriza como WEB o IMAGEN.';
 				$('#pimg')[0].title = 'Permite cambiar el tamaño de las imágenes con el mouse.<small>- Click izquierdo a la imagen y sostenerlo mientras se mueve el cursor hacia alguna dirección para cambiar su tamaño [izquierda encojer, derecha agrandar]</small><small>- Click derecho para regresarla a su tamaño original.</small><small>- Doble click para hacer que la imagen se vea completa en la pantalla [click derecho a la imagen para salir]</small>';
 
-				//Tooltip
-				$('#ndopanel').tooltip({
+				//Descripción opciones extras
+				$('#zrefresh')[0].title = 'Cantidad de tiempo en la que se ejecutarán los scripts de actualizar.';
+				$('#soundON')[0].title = 'Encender / Apagar las alertas de sonido.';
+				$('#zvolume')[0].title = 'Volumen de las alertas de sonido.';
+				$('#znotif')[0].title = 'Dirección del archivo de audio que se escuchará cada que se reciba una nueva notificación.';
+				$('#zfeed')[0].title = 'Dirección del archivo de audio que se escuchará cada que haya una nueva respuesta en un feed.';
+				$('#plusreset')[0].title = 'Regresa Naruho.do Plus + a su estado inicial, eliminando toda configuración, cookies y demás.';
+
+				//Alt opciones extras
+				$('#zrefresh')[0].alt = 'Esta es la principal carga del script, si hay problemas de rendimiento, intenten incrementar el tiempo.\n\nTiempo en segundos, por defecto: 10 segundos.\nNo menos de 2 segundos.';
+				$('#soundON')[0].alt = 'Encendido = 1\nApagado = 2';
+				$('#zvolume')[0].alt = 'Debe ser un número con decimal entre 0.1 y 1.0, por defecto: 0.5\n\n1.0 = Máximo Volumen, 0.1 = 10% Volumen.';
+				$('#znotif')[0].alt = 'Debe ser una dirección completa, por defecto: http://zeyth.totalh.net/ndoplus/Notification.wav\n\nSólo formatos WAV ó MP3.';
+				$('#zfeed')[0].alt = 'Debe ser una dirección completa, por defecto: http://zeyth.totalh.net/ndoplus/Feed.wav\n\nSólo formatos WAV ó MP3.';
+
+				//Tooltip Switches
+				$('#ndopanel li, #ndopanel #plusversion').tooltip({
 					content: function() {
 						return $(this).attr('title');
 					},
 					position: {
 						my: "left+100% top-4", at: "left-65 top"
+					}
+				});
+
+				//Tooltip Extraconfig
+				$('#plusextra span, #plusextra #plusreset').tooltip({
+					content: function() {
+						return $(this).attr('title');
+					},
+					position: {
+						my: "center top", at: "center bottom+5"
 					}
 				});
 
@@ -509,6 +608,138 @@ console.log('Naruho.do Plus + Starto Nya!');
 				//Evitar que se cierre el menú al dar click en una opción
 				$("#ndopanel").click(function(e){
 					e.stopPropagation();
+				});
+
+				//Expandir configuraciones extras
+				$("#plusconfig").click(function(){
+					$('#plusextra').toggle('blind');
+				});
+
+				//Reset Naruho.do Plus+
+				$('#plusreset').click(function(){
+					if (confirm('Todas las configuraciones serán eliminadas.')) {
+						//Detenemos todo
+						clearTimeout(updatetime);
+						clearTimeout(backtabtime);
+						clearTimeout(activetime);
+						clearTimeout(cnowtime);
+
+						//Eliminamos todas las GM_Values
+						//Scripts
+						GM_deleteValue('pnot');
+						GM_deleteValue('pfeed');
+						GM_deleteValue('pport');
+						GM_deleteValue('pbitly');
+						GM_deleteValue('pimg');
+
+						//Configuración extra
+						GM_deleteValue('zrefresh');
+						GM_deleteValue('znotif');
+						GM_deleteValue('zfeed');
+						GM_deleteValue('soundON');
+						GM_deleteValue('zvolume');
+
+						//Eliminamos las Cookies
+						$.each($.cookie(), function (name, value) {
+							if (/^ndoplus./.test(name)) {
+								$.removeCookie(name, { path: '/' });
+							}
+						});
+						$.removeCookie('plus.active', { path: '/' });
+
+						alert('Naruho.do Plus + ha sido reiniciado, por favor recarga la página.');
+					}
+				});
+
+				//Expandir configuraciones extras
+				$("#plusextra span").click(function(){
+					var $id = this.id;
+					var $cfg = window[$id];
+
+					if($id === 'zrefresh') {
+						$cfg = window[$id] / 1000;
+					}
+
+					var $input = prompt(this.alt, $cfg);
+
+					if($input) {
+
+						if($id === 'zrefresh') {
+							$input = parseInt($input);
+
+							if($input > 2) {
+								$input = $input * 1000;
+
+								//Guardamos Configuración
+								GM_setValue('zrefresh', $input);
+
+								//Actualizamos Variable Actual
+								window[$id] = $input;
+
+								console.log(zrefresh);
+								console.log('Numero real');
+							}
+
+						}
+
+						else if($id === 'soundON') {
+							$input = parseInt($input);
+
+							if($input === 1 || $input === 2) {
+								//Guardamos Configuración
+								GM_setValue('soundON',$input);
+								console.log('soundON: ',GM_getValue('soundON'));
+
+								//Actualizamos Variable Actual
+								window[$id] = $input;
+							}
+						}
+
+						else if($id === 'zvolume') {
+							$input = parseFloat($input);
+
+							if($input >= 0.1 && $input <= 1.0) {
+								//Guardamos Configuración
+								GM_setValue('zvolume', $input);
+
+								//Actualizamos Variable Actual
+								window[$id] = $input;
+
+								//Cambiamos Volumenes Actuales
+								notsound.volume = $input;
+								feedsound.volume = $input;
+							}
+						}
+
+						else if($id === 'znotif') {
+							
+							//Guardamos Configuración
+							GM_setValue('znotif', $input);
+
+							//Actualizamos Variable Actual
+							window[$id] = $input;
+
+							//Cambiamos la url del audio
+							notsound.src = znotif;
+							
+						}
+
+						else if($id === 'zfeed') {
+							
+							//Guardamos Configuración
+							GM_setValue('zfeed', $input);
+
+							//Actualizamos Variable Actual
+							window[$id] = $input;
+
+							//Cambiamos la url del audio
+							feedsound.src = zfeed;
+							
+						}
+
+					}
+
+					console.log($input);
 				});
 
 				//Cerrar menu al clickear en cualquier otra parte de la página
@@ -577,11 +808,11 @@ console.log('Naruho.do Plus + Starto Nya!');
 		//Play Function
 		function playSound(z) {
 			console.log('Play Sound!');
-			if (z === 'not' && soundON) {
+			if (z === 'not' && soundON === 1) {
 				notsound.play();	//Notificación
 			}
 
-			else if (z === 'feed' && soundON) {
+			else if (z === 'feed' && soundON === 1) {
 				feedsound.play();	//Feed
 			}
 
@@ -1047,7 +1278,13 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 	// { Notificaciones
 		function notifications() {
-			if(!GM_getValue('pnot') && $location.where !== 'feed' && zlogged) {
+			if(!GM_getValue('pnot') && zlogged) {
+				
+				//No duplicar request en feeds
+				if(!GM_getValue('pfeed') && $location.where === 'feed') {
+					return false;
+				}
+
 				return $.ajax({
 							dataType: 'html',
 							url: '/hashtag/empty',
@@ -1429,7 +1666,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 										$('#board').prepend('<span id="plusfront" style="display:none;"></span>');
 									}
 
-									$('#plusfront').html('<span class="plusfalert"></span>Hay <b>' + $nnew + '</b>' + $nfeed[0] + ', click para ' + $nfeed[1]).off('click').show('bounce', { times: 2 }, 300).click(function() {
+									$('#plusfront').html('<span class="plusfalert"></span>Hay <b>' + $nnew + $nfeed[0] + '</b>, click para ' + $nfeed[1]).off('click').show('bounce', { times: 2 }, 300).click(function() {
 										//Removemos Función para Evitar Duplicados
 										$('#plusfront').off('click');
 
@@ -1451,9 +1688,9 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 
 										//Y los mostramos
-										$newfront.show('slide', {direction: 'left'}, 400).promise().done(function() {
+										$newfront.show('slide', {direction: 'left'}, 500).promise().done(function() {
 											//Escondemos la Alerta
-											$('#plusfront').hide('fade', {}, 300);
+											$('#plusfront').hide('fade', {}, 400);
 										});
 
 										//Rebind Functions
@@ -1501,7 +1738,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 		var imageData = Array();
 		 
 		function findAllImages() {
-			var imgs = $('.message img:not(".plusimg")');
+			var imgs = $('img:not(".plusimg")');
 
 			imgs.addClass('plusimg');
 
