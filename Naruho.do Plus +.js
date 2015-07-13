@@ -1571,28 +1571,6 @@ console.log('Naruho.do Plus + Starto Nya!');
 						// { Feeds
 
 							if(!GM_getValue('pfeed') && $location.where === 'feed') {
-
-
-								if(!$('#xlel').length) {
-									$('#long_feeds').prepend('<span id="xlel">Borrar Último Feed</span><br/>');
-									$('#xlel').click(function(){
-										$('#long_feeds .comments ul li').last().remove();
-									});
-								}
-
-								if(!$('#xlel2').length) {
-									$('#long_feeds').prepend('<span id="xlel2">Borrar Feeds</span><br/>');
-									$('#xlel2').click(function(){
-										$('#long_feeds .comments ul li').remove();
-									});
-								}
-
-								if(!$('#xlel3').length) {
-									$('#long_feeds').prepend('<span id="xlel3">Cambiar último ID</span><br/>');
-									$('#xlel3').click(function(){
-										$('#long_feeds .comments ul li').last()[0].id='#ndo-comment-99999';
-									});
-								}
 								
 								//Feeds Actuales
 								$oldfeed = $('#long_feeds .comments ul li');
