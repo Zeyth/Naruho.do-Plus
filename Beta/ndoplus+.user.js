@@ -3,7 +3,7 @@
 // @namespace   Zeyth
 // @description Agrega funciones adicionales a Naruho.do
 // @include     https://naruho.do/*
-// @version     1.1.0
+// @version     1.1.1
 // @require		https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js
 // @require		https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js
 // @require		https://greasyfork.org/scripts/5233-jquery-cookie-plugin/code/jQuery_Cookie_Plugin.js?version=18550
@@ -73,7 +73,8 @@ console.log('Naruho.do Plus + Starto Nya!');
 		zlogged = false;										//Sin iniciar sesión
 	}
 
-	var $version = '1.1.0/Illya';								//Versión del script
+	var $version = '1.1.1/Illya';								//Versión del script
+	var $changelog = ' - Ahora se ocultan las imágenes al pie de página sólo si hay una imagen en el feed.';
 
 // } /Variables Globales
 
@@ -416,6 +417,9 @@ console.log('Naruho.do Plus + Starto Nya!');
 			width:auto; \
 			height:200px; \
 		} \
+		.message .plushasimg + div { \
+			display:none; \
+		} \
 		</style>');
 	// } /Resize IMG
 
@@ -541,7 +545,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 				$('#plusversion').attr('title','<center><b style="font-size:13px;">Illyasviel von Einzbern Edition</b><br/></center><img src="http://i.imgur.com/MY0yuZI.png" style="margin-top:3px;"/><br/><center><i>Loli Powa!</i></center>');
 
 				//Configuración extra
-				$('#plusextra').html('Actualizar<br/><span id="zrefresh">Frecuencia Notificaciones</span><br/>Audio<br/><span id="soundON">Sonido</span><span id="zvolume">Volumen</span><span id="znotif">Notificación</span><span id="zfeed">Feeds</span><br/>Diseño<br/><span id="plusvideos">Remover Videos</span><span id="plusmedia">Remover Imágenes</span><div id="plusreset">Reiniciar</div>');
+				$('#plusextra').html('Actualizar<br/><span id="zrefresh">Frecuencia Notificaciones</span><br/>Audio<br/><span id="soundON">Sonido</span><span id="zvolume">Volumen</span><span id="znotif">Notificación</span><span id="zfeed">Feeds</span><br/>Diseño<br/><span id="plusvideos">Remover Videos</span><span id="plusmedia" style="display:none;">Remover Imágenes</span><div id="plusreset">Reiniciar</div>');
 
 				//Interruptores
 
@@ -982,6 +986,7 @@ console.log('Naruho.do Plus + Starto Nya!');
 
 									$($link).addClass('zimg');	//Es Imagen
 									$($link).after('<span class="expz"><span>+-</span></span>');
+									$(link).parent().addClass('plushasimg');
 
 								}
 								else {
@@ -1571,28 +1576,6 @@ console.log('Naruho.do Plus + Starto Nya!');
 						// { Feeds
 
 							if(!GM_getValue('pfeed') && $location.where === 'feed') {
-
-
-								if(!$('#xlel').length) {
-									$('#long_feeds').prepend('<span id="xlel">Borrar Último Feed</span><br/>');
-									$('#xlel').click(function(){
-										$('#long_feeds .comments ul li').last().remove();
-									});
-								}
-
-								if(!$('#xlel2').length) {
-									$('#long_feeds').prepend('<span id="xlel2">Borrar Feeds</span><br/>');
-									$('#xlel2').click(function(){
-										$('#long_feeds .comments ul li').remove();
-									});
-								}
-
-								if(!$('#xlel3').length) {
-									$('#long_feeds').prepend('<span id="xlel3">Cambiar último ID</span><br/>');
-									$('#xlel3').click(function(){
-										$('#long_feeds .comments ul li').last()[0].id='#ndo-comment-99999';
-									});
-								}
 								
 								//Feeds Actuales
 								$oldfeed = $('#long_feeds .comments ul li');
