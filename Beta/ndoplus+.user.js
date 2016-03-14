@@ -76,7 +76,8 @@ console.log('Naruho.do Plus + Starto Nya!');
 	var $version = '1.1.2/Illya';								//Versión del script
 	var $changelog = ' \
 		1.1.2: \
-			- Arreglado contador de notificaciones \
+			- Arreglado contador de notificaciones. \
+			- Función de autoexpandir imágenes a medias [Línea 998].	\
 		1.1.1: \
 	 		- Ahora se ocultan las imágenes al pie de página sólo si hay una imagen en el feed. \
 	';
@@ -995,19 +996,19 @@ console.log('Naruho.do Plus + Starto Nya!');
 									$(link).parent().addClass('plushasimg');
 
 									// { Autoexpandir Imágenes
+									if(autoplusimg) {
+										//Minimizar
+										$($link).next('.expz').toggleClass('minz');
 
-									//Minimizar
-									$($link).next('.expz').toggleClass('minz');
+										//Link de la imagen
+										var $href = $link.href;
 
-									//Link de la imagen
-									var $href = $link.href;
+										//Creamos un contenedor y colocamos la imagen.
+										$('<div class="expimg" style="display:none;"><a href="' + $href + '" target="_blank"><img src="' + $href + '" class="plusexp"/></a></div>').insertAfter($($link).next('.expz')).show('blind');
 
-									//Creamos un contenedor y colocamos la imagen.
-									$('<div class="expimg" style="display:none;"><a href="' + $href + '" target="_blank"><img src="' + $href + '" class="plusexp"/></a></div>').insertAfter($($link).next('.expz')).show('blind');
-
-									//Script de redimensionar
-									resimg();
-
+										//Script de redimensionar
+										resimg();
+									}
 									// } /Autoexpandir Imágenes
 
 								}
